@@ -1,11 +1,11 @@
 ---
-title: Connect to Local MCP Servers
-description: Learn how to extend Claude Desktop with local MCP servers to enable file system access and other powerful integrations
+title: ローカル MCP サーバーに接続する
+description: ローカル MCP サーバーを使用して Claude Desktop を拡張し、ファイルシステムへのアクセスやその他の強力な統合を有効にする方法を学びます。
 ---
 
-Model Context Protocol (MCP) servers extend AI applications' capabilities by providing secure, controlled access to local resources and tools. Many clients support MCP, enabling diverse integration possibilities across different platforms and applications.
+モデルコンテキストプロトコル（MCP）サーバーは、ローカルリソースとツールへの安全で制御されたアクセスを提供することで、AIアプリケーションの機能を拡張します。多くのクライアントがMCPをサポートしているため、さまざまなプラットフォームやアプリケーション間で多様な統合が可能になります。
 
-This guide demonstrates how to connect to local MCP servers using Claude Desktop as an example, one of the [many clients that support MCP](/clients). While we focus on Claude Desktop's implementation, the concepts apply broadly to other MCP-compatible clients. By the end of this tutorial, Claude will be able to interact with files on your computer, create new documents, organize folders, and search through your file system—all with your explicit permission for each action.
+このガイドでは、[MCPをサポートする多くのクライアント](/clients)の1つであるClaude Desktopを例に、ローカルMCPサーバーに接続する方法を説明します。Claude Desktopの実装に焦点を当てていますが、ここで説明する概念は他のMCP対応クライアントにも広く適用できます。このチュートリアルを完了すると、Claudeはコンピューター上のファイル操作、新しいドキュメントの作成、フォルダーの整理、ファイルシステムの検索など、すべての操作に対して明示的な許可を与えることで実行できるようになります。
 
 <Frame>
   <img
@@ -14,46 +14,46 @@ This guide demonstrates how to connect to local MCP servers using Claude Desktop
   />
 </Frame>
 
-## Prerequisites
+## 前提条件
 
-Before starting this tutorial, ensure you have the following installed on your system:
+このチュートリアルを始める前に、システムに以下のものがインストールされていることを確認してください。
 
 ### Claude Desktop
 
-Download and install [Claude Desktop](https://claude.ai/download) for your operating system. Claude Desktop is currently available for macOS and Windows. Linux support is coming soon.
+お使いのOSに対応した[Claude Desktop](https://claude.ai/download)をダウンロードしてインストールしてください。Claude Desktopは現在、macOSとWindowsでご利用いただけます。Linuxへの対応は近日中に開始されます。
 
-If you already have Claude Desktop installed, verify you're running the latest version by clicking the Claude menu and selecting "Check for Updates..."
+Claude Desktopを既にインストールしている場合は、Claudeメニューをクリックして「アップデートを確認...」を選択し、最新バージョンであることを確認してください。
 
 ### Node.js
 
-The Filesystem Server and many other MCP servers require Node.js to run. Verify your Node.js installation by opening a terminal or command prompt and running:
+ファイルシステムサーバーをはじめとする多くのMCPサーバーは、Node.jsの実行を必要とします。ターミナルまたはコマンドプロンプトを開いて次のコマンドを実行し、Node.jsのインストールを確認してください。
 
 ```bash
 node --version
 ```
 
-If Node.js is not installed, download it from [nodejs.org](https://nodejs.org/). We recommend the LTS (Long Term Support) version for stability.
+Node.jsがインストールされていない場合は、[nodejs.org](https://nodejs.org/)からダウンロードしてください。安定性のためにLTS（長期サポート）バージョンの使用を推奨します。
 
-## Understanding MCP Servers
+## MCPサーバーについて
 
-MCP servers are programs that run on your computer and provide specific capabilities to Claude Desktop through a standardized protocol. Each server exposes tools that Claude can use to perform actions, with your approval. The Filesystem Server we'll install provides tools for:
+MCPサーバーは、お客様のコンピュータ上で実行され、標準化されたプロトコルを介してClaude Desktopに特定の機能を提供するプログラムです。各サーバーは、お客様の承認を得てClaudeが操作を実行するために使用できるツールを公開しています。インストールするファイルシステムサーバーは、以下のツールを提供します。
 
-- Reading file contents and directory structures
-- Creating new files and directories
-- Moving and renaming files
-- Searching for files by name or content
+- ファイルの内容とディレクトリ構造の読み取り
+- 新しいファイルとディレクトリの作成
+- ファイルの移動と名前の変更
+- 名前またはコンテンツによるファイル検索
 
-All actions require your explicit approval before execution, ensuring you maintain full control over what Claude can access and modify.
+すべての操作は実行前に明示的な承認を必要とするため、Claudeがアクセスおよび変更できる内容を完全に制御できます。
 
-## Installing the Filesystem Server
+## ファイルシステムサーバーのインストール
 
-The process involves configuring Claude Desktop to automatically start the Filesystem Server whenever you launch the application. This configuration is done through a JSON file that tells Claude Desktop which servers to run and how to connect to them.
+このプロセスでは、Claude Desktop を起動するたびにファイルシステムサーバーが自動的に起動するように設定する必要があります。この設定は、実行するサーバーとそれらへの接続方法を Claude Desktop に指示する JSON ファイルを通じて行われます。
 
 <Steps>
 <Step title="Open Claude Desktop Settings">
-Start by accessing the Claude Desktop settings. Click on the Claude menu in your system's menu bar (not the settings within the Claude window itself) and select "Settings..."
+まず、Claudeデスクトップの設定にアクセスします。システムのメニューバーにあるClaudeメニュー（Claudeウィンドウ自体の設定ではありません）をクリックし、「Settings...」を選択します。
 
-On macOS, this appears in the top menu bar:
+macOS では、これは上部のメニューバーに表示されます。
 
 <Frame style={{ textAlign: "center" }}>
   <img
@@ -63,14 +63,14 @@ On macOS, this appears in the top menu bar:
   />
 </Frame>
 
-This opens the Claude Desktop configuration window, which is separate from your Claude account settings.
+これにより、Claude アカウント設定とは別の Claude Desktop 構成ウィンドウが開きます。
 
 </Step>
 
 <Step title="Access Developer Settings">
-In the Settings window, navigate to the "Developer" tab in the left sidebar. This section contains options for configuring MCP servers and other developer features.
+設定ウィンドウで、左側のサイドバーにある「開発者」タブに移動します。このセクションには、MCPサーバーやその他の開発者向け機能を設定するためのオプションが含まれています。
 
-Click the "Edit Config" button to open the configuration file:
+「設定を編集」ボタンをクリックして、設定ファイルを開きます。
 
 <Frame>
   <img
@@ -79,7 +79,7 @@ Click the "Edit Config" button to open the configuration file:
   />
 </Frame>
 
-This action creates a new configuration file if one doesn't exist, or opens your existing configuration. The file is located at:
+このアクションは、設定ファイルが存在しない場合は新しい設定ファイルを作成し、存在しない場合は既存の設定ファイルを開きます。ファイルは次の場所にあります。
 
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
@@ -87,7 +87,7 @@ This action creates a new configuration file if one doesn't exist, or opens your
 </Step>
 
 <Step title="Configure the Filesystem Server">
-Replace the contents of the configuration file with the following JSON structure. This configuration tells Claude Desktop to start the Filesystem Server with access to specific directories:
+設定ファイルの内容を以下のJSON構造に置き換えます。この設定は、Claude Desktopに特定のディレクトリへのアクセス権限を持つファイルシステムサーバーを起動するように指示します。
 
 <CodeGroup>
 
@@ -125,31 +125,32 @@ Replace the contents of the configuration file with the following JSON structure
 
 </CodeGroup>
 
-Replace `username` with your actual computer username. The paths listed in the `args` array specify which directories the Filesystem Server can access. You can modify these paths or add additional directories as needed.
+`username` を実際のコンピュータのユーザー名に置き換えてください。
+`args` 配列にリストされているパスは、ファイルシステムサーバーがアクセスできるディレクトリを指定します。必要に応じてこれらのパスを変更したり、ディレクトリを追加したりできます。
 
 <Tip>
-**Understanding the Configuration**
+**設定について**
 
-- `"filesystem"`: A friendly name for the server that appears in Claude Desktop
-- `"command": "npx"`: Uses Node.js's npx tool to run the server
-- `"-y"`: Automatically confirms the installation of the server package
-- `"@modelcontextprotocol/server-filesystem"`: The package name of the Filesystem Server
-- The remaining arguments: Directories the server is allowed to access
+- `"filesystem"`: Claude Desktop に表示されるサーバーのフレンドリ名
+- `"command": "npx"`: Node.js の npx ツールを使用してサーバーを実行します
+- `"-y"`: サーバーパッケージのインストールを自動的に確認します
+- `"@modelcontextprotocol/server-filesystem"`: ファイルシステムサーバーのパッケージ名
+- 残りの引数: サーバーがアクセスできるディレクトリ
 
 </Tip>
 
 <Warning>
-**Security Consideration**
+**セキュリティに関する考慮事項**
 
-Only grant access to directories you're comfortable with Claude reading and modifying. The server runs with your user account permissions, so it can perform any file operations you can perform manually.
+Claude による読み取りと変更が許容されるディレクトリのみにアクセスを許可してください。サーバーはユーザーアカウントの権限で実行されるため、手動で実行できるファイル操作はすべて実行できます。
 
 </Warning>
 </Step>
 
 <Step title="Restart Claude Desktop">
-After saving the configuration file, completely quit Claude Desktop and restart it. The application needs to restart to load the new configuration and start the MCP server.
+設定ファイルを保存したら、Claude Desktop を完全に終了し、再起動してください。新しい設定を読み込み、MCP サーバーを起動するには、アプリケーションの再起動が必要です。
 
-Upon successful restart, you'll see an MCP server indicator <img src="/images/claude-desktop-mcp-slider.svg" style={{display: 'inline', margin: 0, height: '1.3em'}} /> in the bottom-right corner of the conversation input box:
+再起動が成功すると、会話入力ボックスの右下隅に MCP サーバーインジケーター <img src="/images/claude-desktop-mcp-slider.svg" style={{display: 'inline', margin: 0, height: '1.3em'}} /> が表示されます。
 
 <Frame>
   <img
@@ -158,7 +159,7 @@ Upon successful restart, you'll see an MCP server indicator <img src="/images/cl
   />
 </Frame>
 
-Click on this indicator to view the available tools provided by the Filesystem Server:
+このインジケータをクリックすると、ファイルシステム サーバーが提供する利用可能なツールが表示されます。
 
 <Frame style={{ textAlign: "center" }}>
   <img
@@ -168,24 +169,24 @@ Click on this indicator to view the available tools provided by the Filesystem S
   />
 </Frame>
 
-If the server indicator doesn't appear, refer to the [Troubleshooting](#troubleshooting) section for debugging steps.
+サーバーインジケーターが表示されない場合は、[トラブルシューティング](#troubleshooting) セクションのデバッグ手順を参照してください。
 
 </Step>
 </Steps>
 
-## Using the Filesystem Server
+## ファイルシステムサーバーの使用
 
-With the Filesystem Server connected, Claude can now interact with your file system. Try these example requests to explore the capabilities:
+ファイルシステムサーバーを接続すると、Claude はファイルシステムを操作できるようになります。以下のサンプルリクエストを試して、機能をご確認ください。
 
-### File Management Examples
+### ファイル管理の例
 
-- **"Can you write a poem and save it to my desktop?"** - Claude will compose a poem and create a new text file on your desktop
-- **"What work-related files are in my downloads folder?"** - Claude will scan your downloads and identify work-related documents
-- **"Please organize all images on my desktop into a new folder called 'Images'"** - Claude will create a folder and move image files into it
+- **「詩を書いてデスクトップに保存してもらえますか？」** - クロードが詩を作成し、デスクトップに新しいテキストファイルを作成します。
+- **「ダウンロードフォルダには仕事関連のファイルがありますか？」** - クロードがダウンロードファイルをスキャンし、仕事関連の文書を特定します。
+- **「デスクトップにあるすべての画像を「Images」という新しいフォルダに整理してください。」** - クロードがフォルダを作成し、画像ファイルをそこに移動します。
 
-### How Approval Works
+### 承認の仕組み
 
-Before executing any file system operation, Claude will request your approval. This ensures you maintain control over all actions:
+ファイルシステム操作を実行する前に、Claude はユーザーの承認を求めます。これにより、すべての操作をユーザーが制御できるようになります。
 
 <Frame style={{ textAlign: "center" }}>
   <img
@@ -195,20 +196,20 @@ Before executing any file system operation, Claude will request your approval. T
   />
 </Frame>
 
-Review each request carefully before approving. You can always deny a request if you're not comfortable with the proposed action.
+承認する前に、各リクエストをよく確認してください。提案されたアクションに納得できない場合は、いつでもリクエストを拒否できます。
 
-## Troubleshooting
+## トラブルシューティング
 
-If you encounter issues setting up or using the Filesystem Server, these solutions address common problems:
+ファイルシステムサーバーの設定または使用中に問題が発生した場合、以下の解決策が一般的な問題に対処します。
 
 <AccordionGroup>
 <Accordion title="Server not showing up in Claude / hammer icon missing">
 
-1. Restart Claude Desktop completely
-2. Check your `claude_desktop_config.json` file syntax
-3. Make sure the file paths included in `claude_desktop_config.json` are valid and that they are absolute and not relative
-4. Look at [logs](#getting-logs-from-claude-for-desktop) to see why the server is not connecting
-5. In your command line, try manually running the server (replacing `username` as you did in `claude_desktop_config.json`) to see if you get any errors:
+1. Claude Desktop を完全に再起動します。
+2. `claude_desktop_config.json` ファイルの構文を確認します。
+3. `claude_desktop_config.json` に含まれるファイルパスが有効であり、相対パスではなく絶対パスであることを確認します。
+4. [ログ](#getting-logs-from-claude-for-desktop) を確認し、サーバーに接続できない理由を確認します。
+5. コマンドラインで、`claude_desktop_config.json` と同様に `username` を置き換えてサーバーを手動で実行し、エラーが発生するかどうかを確認します。
 
 <CodeGroup>
 
@@ -225,15 +226,15 @@ npx -y @modelcontextprotocol/server-filesystem C:\Users\username\Desktop C:\User
 </Accordion>
 <Accordion title="Getting logs from Claude Desktop">
 
-Claude.app logging related to MCP is written to log files in:
+MCP 関連の Claude.app ログは、以下のログファイルに書き込まれます。
 
 - macOS: `~/Library/Logs/Claude`
 - Windows: `%APPDATA%\Claude\logs`
 
-- `mcp.log` will contain general logging about MCP connections and connection failures.
-- Files named `mcp-server-SERVERNAME.log` will contain error (stderr) logging from the named server.
+- `mcp.log` には、MCP 接続と接続失敗に関する一般的なログが含まれます。
+- `mcp-server-SERVERNAME.log` という名前のファイルには、指定されたサーバーからのエラー (stderr) ログが含まれます。
 
-You can run the following command to list recent logs and follow along with any new ones (on Windows, it will only show recent logs):
+以下のコマンドを実行すると、最近のログの一覧が表示され、新しいログがあればそれに従ってログを追跡できます (Windows では、最近のログのみが表示されます)。
 
 <CodeGroup>
 
@@ -250,21 +251,21 @@ type "%APPDATA%\Claude\logs\mcp*.log"
 </Accordion>
 <Accordion title="Tool calls failing silently">
 
-If Claude attempts to use the tools but they fail:
+Claude がツールを使用しようとして失敗した場合:
 
-1. Check Claude's logs for errors
-2. Verify your server builds and runs without errors
-3. Try restarting Claude Desktop
+1. Claude のログにエラーがないか確認します。
+2. サーバーのビルドと実行にエラーがないことを確認します。
+3. Claude Desktop を再起動します。
 
 </Accordion>
 <Accordion title="None of this is working. What do I do?">
 
-Please refer to our [debugging guide](/legacy/tools/debugging) for better debugging tools and more detailed guidance.
+より優れたデバッグ ツールと詳細なガイダンスについては、[デバッグ ガイド](/legacy/tools/debugging) を参照してください。
 
 </Accordion>
 <Accordion title="ENOENT error and `${APPDATA}` in paths on Windows">
 
-If your configured server fails to load, and you see within its logs an error referring to `${APPDATA}` within a path, you may need to add the expanded value of `%APPDATA%` to your `env` key in `claude_desktop_config.json`:
+構成されたサーバーの読み込みに失敗し、そのログ内にパス内の `${APPDATA}` を参照するエラーが表示される場合は、`claude_desktop_config.json` の `env` キーに `%APPDATA%` の展開値を追加する必要がある可能性があります。
 
 ```json
 {
@@ -279,13 +280,13 @@ If your configured server fails to load, and you see within its logs an error re
 }
 ```
 
-With this change in place, launch Claude Desktop once again.
+この変更を行ったら、Claude Desktop をもう一度起動します。
 
 <Warning>
 
-**NPM should be installed globally**
+**NPM はグローバルにインストールする必要があります**
 
-The `npx` command may continue to fail if you have not installed NPM globally. If NPM is already installed globally, you will find `%APPDATA%\npm` exists on your system. If not, you can install NPM globally by running the following command:
+NPM がグローバルにインストールされていない場合、`npx` コマンドは引き続き失敗する可能性があります。NPM が既にグローバルにインストールされている場合は、システムに `%APPDATA%\npm` が存在します。存在しない場合は、以下のコマンドを実行して NPM をグローバルにインストールできます。
 
 ```bash
 npm install -g npm
@@ -296,9 +297,9 @@ npm install -g npm
 </Accordion>
 </AccordionGroup>
 
-## Next Steps
+## 次のステップ
 
-Now that you've successfully connected Claude Desktop to a local MCP server, explore these options to expand your setup:
+Claude Desktop をローカル MCP サーバーに接続できたので、セットアップを拡張するための以下のオプションを検討してください。
 
 <CardGroup cols={2}>
   <Card

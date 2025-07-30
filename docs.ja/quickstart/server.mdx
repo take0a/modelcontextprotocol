@@ -1,15 +1,16 @@
 ---
-title: "Build an MCP Server"
-description: "Get started building your own server to use in Claude for Desktop and other clients."
+title: "MCPサーバーを構築する"
+description: "Claude for Desktop やその他のクライアントで使用する独自のサーバーの構築を始めましょう。"
 ---
 
-In this tutorial, we'll build a simple MCP weather server and connect it to a host, Claude for Desktop. We'll start with a basic setup, and then progress to more complex use cases.
+このチュートリアルでは、シンプルなMCP天気予報サーバーを構築し、ホストであるClaude for Desktopに接続します。
+まずは基本的な設定から始め、その後、より複雑なユースケースへと進んでいきます。
 
-### What we'll be building
+### 構築するもの
 
-Many LLMs do not currently have the ability to fetch the forecast and severe weather alerts. Let's use MCP to solve that!
+多くのLLMは現在、天気予報や悪天候警報を取得する機能を備えていません。MCPを使ってこの問題を解決しましょう！
 
-We'll build a server that exposes two tools: `get_alerts` and `get_forecast`. Then we'll connect the server to an MCP host (in this case, Claude for Desktop):
+`get_alerts`と`get_forecast`という2つのツールを公開するサーバーを構築します。そして、そのサーバーをMCPホスト（今回はClaude for Desktop）に接続します。
 
 <Frame>
   <img src="/images/weather-alerts.png" />
@@ -20,52 +21,52 @@ We'll build a server that exposes two tools: `get_alerts` and `get_forecast`. Th
 
 <Note>
 
-Servers can connect to any client. We've chosen Claude for Desktop here for simplicity, but we also have guides on [building your own client](/quickstart/client) as well as a [list of other clients here](/clients).
+サーバーはどのクライアントにも接続できます。ここではシンプルさを重視してClaude for Desktopを選択しましたが、[独自のクライアントを構築する](/quickstart/client)ガイドや[その他のクライアントの一覧はこちら](/clients)もご用意しています。
 
 </Note>
 
-### Core MCP Concepts
+### MCP コアコンセプト
 
-MCP servers can provide three main types of capabilities:
+MCP サーバーは、主に 3 種類の機能を提供できます。
 
-1. **Resources**: File-like data that can be read by clients (like API responses or file contents)
-2. **Tools**: Functions that can be called by the LLM (with user approval)
-3. **Prompts**: Pre-written templates that help users accomplish specific tasks
+1. **リソース**: クライアントが読み取り可能なファイル形式のデータ（API レスポンスやファイルコンテンツなど）
+2. **ツール**: LLM から（ユーザーの承認を得て）呼び出すことができる関数
+3. **プロンプト**: ユーザーが特定のタスクを実行するのに役立つ、事前に作成されたテンプレート
 
-This tutorial will primarily focus on tools.
+このチュートリアルでは、主にツールに焦点を当てます。
 
 <Tabs>
 <Tab title='Python'>
 
-Let's get started with building our weather server! [You can find the complete code for what we'll be building here.](https://github.com/modelcontextprotocol/quickstart-resources/tree/main/weather-server-python)
+天気予報サーバーの構築を始めましょう！[構築するサーバーの完全なコードは、こちらでご覧いただけます。](https://github.com/modelcontextprotocol/quickstart-resources/tree/main/weather-server-python)
 
-### Prerequisite knowledge
+### 前提知識
 
-This quickstart assumes you have familiarity with:
+このクイックスタートでは、以下の知識があることを前提としています。
 
 - Python
-- LLMs like Claude
+- Claude などの LLM
 
-### Logging in MCP Servers
+### MCP サーバーでのログ記録
 
-When implementing MCP servers, be careful about how you handle logging:
+MCP サーバーを実装する際は、ログ記録の処理方法に注意してください。
 
-**For STDIO-based servers:** Never write to standard output (stdout). This includes:
+**STDIO ベースのサーバーの場合:** 標準出力 (stdout) への書き込みは絶対に行わないでください。これには以下のものが含まれます。
 
-- `print()` statements in Python
-- `console.log()` in JavaScript
-- `fmt.Println()` in Go
-- Similar stdout functions in other languages
+- Python の `print()` ステートメント
+- JavaScript の `console.log()`
+- Go の `fmt.Println()`
+- 他言語の同様の stdout 関数
 
-Writing to stdout will corrupt the JSON-RPC messages and break your server.
+stdout への書き込みは JSON-RPC メッセージを破損させ、サーバーを動作不能にします。
 
-**For HTTP-based servers:** Standard output logging is fine since it doesn't interfere with HTTP responses.
+**HTTP ベースのサーバーの場合:** 標準出力へのログ記録は HTTP レスポンスに影響を与えないため、問題ありません。
 
-### Best Practices
+### ベストプラクティス
 
-1. Use a logging library that writes to stderr or files.
+1. 標準エラー出力またはファイルに書き込むログライブラリを使用します。
 
-### Quick Examples
+### 簡単な例
 
 ```python
 # ❌ Bad (STDIO)
@@ -76,14 +77,14 @@ import logging
 logging.info("Processing request")
 ```
 
-### System requirements
+### システム要件
 
-- Python 3.10 or higher installed.
-- You must use the Python MCP SDK 1.2.0 or higher.
+- Python 3.10 以降がインストールされている必要があります。
+- Python MCP SDK 1.2.0 以降を使用する必要があります。
 
-### Set up your environment
+### 環境を設定する
 
-First, let's install `uv` and set up our Python project and environment:
+まず、「uv」をインストールし、Python プロジェクトと環境を設定しましょう。
 
 <CodeGroup>
 
@@ -97,9 +98,9 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 </CodeGroup>
 
-Make sure to restart your terminal afterwards to ensure that the `uv` command gets picked up.
+`uv` コマンドが確実に実行されるように、ターミナルを再起動してください。
 
-Now, let's create and set up our project:
+それでは、プロジェクトを作成して設定しましょう。
 
 <CodeGroup>
 
@@ -137,13 +138,13 @@ new-item weather.py
 
 </CodeGroup>
 
-Now let's dive into building your server.
+それでは、サーバーの構築に取り掛かりましょう。
 
-## Building your server
+## サーバーの構築
 
-### Importing packages and setting up the instance
+### パッケージのインポートとインスタンスのセットアップ
 
-Add these to the top of your `weather.py`:
+`weather.py` の先頭に以下のコードを追加します。
 
 ```python
 from typing import Any
@@ -158,11 +159,11 @@ NWS_API_BASE = "https://api.weather.gov"
 USER_AGENT = "weather-app/1.0"
 ```
 
-The FastMCP class uses Python type hints and docstrings to automatically generate tool definitions, making it easy to create and maintain MCP tools.
+FastMCP クラスは、Python の型ヒントとドキュメント文字列を使用してツール定義を自動的に生成し、MCP ツールの作成と保守を容易にします。
 
-### Helper functions
+### ヘルパー関数
 
-Next, let's add our helper functions for querying and formatting the data from the National Weather Service API:
+次に、National Weather Service API から取得したデータのクエリとフォーマットを行うためのヘルパー関数を追加しましょう。
 
 ```python
 async def make_nws_request(url: str) -> dict[str, Any] | None:
@@ -191,9 +192,9 @@ Instructions: {props.get('instruction', 'No specific instructions provided')}
 """
 ```
 
-### Implementing tool execution
+### ツール実行の実装
 
-The tool execution handler is responsible for actually executing the logic of each tool. Let's add it:
+ツール実行ハンドラーは、各ツールのロジックを実際に実行する役割を担います。これを追加してみましょう。
 
 ```python
 @mcp.tool()
@@ -252,9 +253,9 @@ Forecast: {period['detailedForecast']}
     return "\n---\n".join(forecasts)
 ```
 
-### Running the server
+### サーバーの実行
 
-Finally, let's initialize and run the server:
+最後に、サーバーを初期化して実行します。
 
 ```python
 if __name__ == "__main__":
@@ -262,24 +263,24 @@ if __name__ == "__main__":
     mcp.run(transport='stdio')
 ```
 
-Your server is complete! Run `uv run weather.py` to start the MCP server, which will listen for messages from MCP hosts.
+サーバーが完成しました！ `uv run weather.py` を実行して MCP サーバーを起動すると、MCP ホストからのメッセージをリッスンします。
 
-Let's now test your server from an existing MCP host, Claude for Desktop.
+既存の MCP ホストである Claude for Desktop からサーバーをテストしてみましょう。
 
-## Testing your server with Claude for Desktop
+## Claude for Desktop でサーバーをテストする
 
 <Note>
 
-Claude for Desktop is not yet available on Linux. Linux users can proceed to the [Building a client](/quickstart/client) tutorial to build an MCP client that connects to the server we just built.
+Claude for Desktop はまだ Linux ではご利用いただけません。
+Linux ユーザーは、[クライアントの構築](/quickstart/client) チュートリアルに進み、構築したサーバーに接続する MCP クライアントを構築できます。
 
 </Note>
 
-First, make sure you have Claude for Desktop installed. [You can install the latest version
-here.](https://claude.ai/download) If you already have Claude for Desktop, **make sure it's updated to the latest version.**
+まず、Claude for Desktop がインストールされていることを確認してください。[最新バージョンはこちらからインストールできます。](https://claude.ai/download) 既に Claude for Desktop をお持ちの場合は、**最新バージョンにアップデートされていることを確認してください。**
 
-We'll need to configure Claude for Desktop for whichever MCP servers you want to use. To do this, open your Claude for Desktop App configuration at `~/Library/Application Support/Claude/claude_desktop_config.json` in a text editor. Make sure to create the file if it doesn't exist.
+使用する MCP サーバーに合わせて Claude for Desktop を設定する必要があります。これを行うには、テキストエディターで `~/Library/Application Support/Claude/claude_desktop_config.json` にある Claude for Desktop アプリの設定ファイルを開きます。ファイルが存在しない場合は作成してください。
 
-For example, if you have [VS Code](https://code.visualstudio.com/) installed:
+例えば、[VS Code](https://code.visualstudio.com/) がインストールされている場合：
 
 <CodeGroup>
 
@@ -293,9 +294,9 @@ code $env:AppData\Claude\claude_desktop_config.json
 
 </CodeGroup>
 
-You'll then add your servers in the `mcpServers` key. The MCP UI elements will only show up in Claude for Desktop if at least one server is properly configured.
+次に、`mcpServers` キーにサーバーを追加します。MCP UI 要素は、少なくとも 1 つのサーバーが適切に構成されている場合にのみ、Claude for Desktop に表示されます。
 
-In this case, we'll add our single weather server like so:
+今回の場合は、単一の天気予報サーバーを次のように追加します。
 
 <CodeGroup>
 
@@ -335,57 +336,57 @@ In this case, we'll add our single weather server like so:
 
 <Warning>
 
-You may need to put the full path to the `uv` executable in the `command` field. You can get this by running `which uv` on MacOS/Linux or `where uv` on Windows.
+`command` フィールドに `uv` 実行ファイルへのフルパスを入力する必要があるかもしれません。これは、MacOS/Linux では `which uv`、Windows では `where uv` を実行することで取得できます。
 
 </Warning>
 
 <Note>
 
-Make sure you pass in the absolute path to your server. You can get this by running `pwd` on MacOS/Linux or `cd` on Windows Command Prompt. On Windows, remember to use double backslashes (`\\`) or forward slashes (`/`) in the JSON path.
+サーバーの絶対パスを必ず指定してください。MacOS/Linuxでは「pwd」、Windowsコマンドプロンプトでは「cd」を実行することで取得できます。Windowsでは、JSONパスに二重のバックスラッシュ（「\\」）またはスラッシュ（「/」）を使用することを忘れないでください。
 
 </Note>
 
-This tells Claude for Desktop:
+これはClaude for Desktopに以下の情報を伝えます。
 
-1. There's an MCP server named "weather"
-2. To launch it by running `uv --directory /ABSOLUTE/PATH/TO/PARENT/FOLDER/weather run weather.py`
+1. 「weather」という名前のMCPサーバーがあります。
+2. 起動するには、`uv --directory /ABSOLUTE/PATH/TO/PARENT/FOLDER/weather run weather.py` を実行します。
 
-Save the file, and restart **Claude for Desktop**.
+ファイルを保存し、**Claude for Desktop** を再起動します。
 
 </Tab>
 
 <Tab title='Node'>
 
-Let's get started with building our weather server! [You can find the complete code for what we'll be building here.](https://github.com/modelcontextprotocol/quickstart-resources/tree/main/weather-server-typescript)
+天気予報サーバーの構築を始めましょう！[構築するサーバーの完全なコードは、こちらでご覧いただけます。](https://github.com/modelcontextprotocol/quickstart-resources/tree/main/weather-server-typescript)
 
-### Prerequisite knowledge
+### 前提知識
 
-This quickstart assumes you have familiarity with:
+このクイックスタートでは、以下の知識があることを前提としています。
 
 - TypeScript
-- LLMs like Claude
+- Claude などの LLM
 
-### Logging in MCP Servers
+### MCP サーバーでのログ記録
 
-When implementing MCP servers, be careful about how you handle logging:
+MCP サーバーを実装する際は、ログ記録の処理方法に注意してください。
 
-**For STDIO-based servers:** Never write to standard output (stdout). This includes:
+**STDIO ベースのサーバーの場合:** 標準出力 (stdout) への書き込みは絶対に行わないでください。これには以下のものが含まれます。
 
-- `print()` statements in Python
-- `console.log()` in JavaScript
-- `fmt.Println()` in Go
-- Similar stdout functions in other languages
+- Python の `print()` ステートメント
+- JavaScript の `console.log()`
+- Go の `fmt.Println()`
+- 他言語の同様の stdout 関数
 
-Writing to stdout will corrupt the JSON-RPC messages and break your server.
+stdout への書き込みは JSON-RPC メッセージを破損させ、サーバーを動作不能にします。
 
-**For HTTP-based servers:** Standard output logging is fine since it doesn't interfere with HTTP responses.
+**HTTP ベースのサーバーの場合:** 標準出力へのログ記録は HTTP レスポンスに影響を与えないため、問題ありません。
 
-### Best Practices
+### ベストプラクティス
 
-1. Use a logging library that writes to stderr or files, such as `logging` in Python.
-2. For JavaScript, be especially careful - `console.log()` writes to stdout by default
+1. Python の `logging` など、stderr またはファイルに書き込むログライブラリを使用します。
+2. JavaScript の場合は特に注意が必要です。`console.log()` はデフォルトで stdout に書き込みます。
 
-### Quick Examples
+### 簡単な例
 
 ```javascript
 // ❌ Bad (STDIO)
@@ -395,23 +396,23 @@ console.log("Server started");
 console.error("Server started"); // stderr is safe
 ```
 
-### System requirements
+### システム要件
 
-For TypeScript, make sure you have the latest version of Node installed.
+TypeScript をご利用の場合は、最新バージョンの Node がインストールされていることを確認してください。
 
-### Set up your environment
+### 環境の設定
 
-First, let's install Node.js and npm if you haven't already. You can download them from [nodejs.org](https://nodejs.org/).
-Verify your Node.js installation:
+まず、Node.js と npm をまだインストールしていない場合はインストールしましょう。これらは [nodejs.org](https://nodejs.org/) からダウンロードできます。
+Node.js のインストール状況を確認します。
 
 ```bash
 node --version
 npm --version
 ```
 
-For this tutorial, you'll need Node.js version 16 or higher.
+このチュートリアルでは、Node.js バージョン 16 以降が必要です。
 
-Now, let's create and set up our project:
+それでは、プロジェクトを作成して設定しましょう。
 
 <CodeGroup>
 
@@ -451,7 +452,7 @@ new-item src\index.ts
 
 </CodeGroup>
 
-Update your package.json to add type: "module" and a build script:
+package.json を更新して、type: "module" とビルド スクリプトを追加します。
 
 ```json package.json
 {
@@ -466,7 +467,7 @@ Update your package.json to add type: "module" and a build script:
 }
 ```
 
-Create a `tsconfig.json` in the root of your project:
+プロジェクトのルートに `tsconfig.json` を作成します。
 
 ```json tsconfig.json
 {
@@ -486,13 +487,13 @@ Create a `tsconfig.json` in the root of your project:
 }
 ```
 
-Now let's dive into building your server.
+それでは、サーバーの構築に取り掛かりましょう。
 
-## Building your server
+## サーバーの構築
 
-### Importing packages and setting up the instance
+### パッケージのインポートとインスタンスのセットアップ
 
-Add these to the top of your `src/index.ts`:
+`src/index.ts` の先頭に以下のコードを追加してください。
 
 ```typescript
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -513,9 +514,9 @@ const server = new McpServer({
 });
 ```
 
-### Helper functions
+### ヘルパー関数
 
-Next, let's add our helper functions for querying and formatting the data from the National Weather Service API:
+次に、National Weather Service API から取得したデータのクエリとフォーマットを行うためのヘルパー関数を追加しましょう。
 
 ```typescript
 // Helper function for making NWS API requests
@@ -586,9 +587,9 @@ interface ForecastResponse {
 }
 ```
 
-### Implementing tool execution
+### ツール実行の実装
 
-The tool execution handler is responsible for actually executing the logic of each tool. Let's add it:
+ツール実行ハンドラーは、各ツールのロジックを実際に実行する役割を担います。これを追加してみましょう。
 
 ```typescript
 // Register weather tools
@@ -729,9 +730,9 @@ server.tool(
 );
 ```
 
-### Running the server
+### サーバーの実行
 
-Finally, implement the main function to run the server:
+最後に、サーバーを実行するためのメイン関数を実装します。
 
 ```typescript
 async function main() {
@@ -746,24 +747,24 @@ main().catch((error) => {
 });
 ```
 
-Make sure to run `npm run build` to build your server! This is a very important step in getting your server to connect.
+`npm run build` を実行してサーバーをビルドしてください。これはサーバーを接続する上で非常に重要なステップです。
 
-Let's now test your server from an existing MCP host, Claude for Desktop.
+既存の MCP ホストである Claude for Desktop からサーバーをテストしてみましょう。
 
 ## Testing your server with Claude for Desktop
 
 <Note>
 
-Claude for Desktop is not yet available on Linux. Linux users can proceed to the [Building a client](/quickstart/client) tutorial to build an MCP client that connects to the server we just built.
+Claude for Desktop はまだ Linux ではご利用いただけません。
+Linux ユーザーは、[クライアントの構築](/quickstart/client) チュートリアルに進み、構築したサーバーに接続する MCP クライアントを構築できます。
 
 </Note>
 
-First, make sure you have Claude for Desktop installed. [You can install the latest version
-here.](https://claude.ai/download) If you already have Claude for Desktop, **make sure it's updated to the latest version.**
+まず、Claude for Desktop がインストールされていることを確認してください。[最新バージョンはこちらからインストールできます。](https://claude.ai/download) 既に Claude for Desktop をお持ちの場合は、**最新バージョンにアップデートされていることを確認してください。**
 
-We'll need to configure Claude for Desktop for whichever MCP servers you want to use. To do this, open your Claude for Desktop App configuration at `~/Library/Application Support/Claude/claude_desktop_config.json` in a text editor. Make sure to create the file if it doesn't exist.
+使用する MCP サーバーに合わせて Claude for Desktop を設定する必要があります。これを行うには、テキストエディターで `~/Library/Application Support/Claude/claude_desktop_config.json` にある Claude for Desktop アプリの設定ファイルを開きます。ファイルが存在しない場合は作成してください。
 
-For example, if you have [VS Code](https://code.visualstudio.com/) installed:
+例えば、[VS Code](https://code.visualstudio.com/) がインストールされている場合：
 
 <CodeGroup>
 
@@ -777,9 +778,9 @@ code $env:AppData\Claude\claude_desktop_config.json
 
 </CodeGroup>
 
-You'll then add your servers in the `mcpServers` key. The MCP UI elements will only show up in Claude for Desktop if at least one server is properly configured.
+次に、`mcpServers` キーにサーバーを追加します。MCP UI 要素は、少なくとも 1 つのサーバーが適切に構成されている場合にのみ、Claude for Desktop に表示されます。
 
-In this case, we'll add our single weather server like so:
+今回の場合は、単一の天気予報サーバーを次のように追加します。
 
 <CodeGroup>
 
@@ -807,12 +808,12 @@ In this case, we'll add our single weather server like so:
 
 </CodeGroup>
 
-This tells Claude for Desktop:
+これはClaude for Desktopに以下の情報を伝えます。
 
-1. There's an MCP server named "weather"
-2. Launch it by running `node /ABSOLUTE/PATH/TO/PARENT/FOLDER/weather/build/index.js`
+1. 「weather」という名前のMCPサーバーがあります。
+2. `node /ABSOLUTE/PATH/TO/PARENT/FOLDER/weather/build/index.js` を実行して起動します。
 
-Save the file, and restart **Claude for Desktop**.
+ファイルを保存し、**Claude for Desktop** を再起動します。
 
 </Tab>
 <Tab title='Java'>
