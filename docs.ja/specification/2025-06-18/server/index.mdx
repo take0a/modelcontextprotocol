@@ -4,25 +4,22 @@ title: Overview
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-Servers provide the fundamental building blocks for adding context to language models via
-MCP. These primitives enable rich interactions between clients, servers, and language
-models:
+サーバーは、MCPを介して言語モデルにコンテキストを追加するための基本的な構成要素を提供します。
+これらのプリミティブにより、クライアント、サーバー、言語モデル間の高度なインタラクションが可能になります。
 
-- **Prompts**: Pre-defined templates or instructions that guide language model
-  interactions
-- **Resources**: Structured data or content that provides additional context to the model
-- **Tools**: Executable functions that allow models to perform actions or retrieve
-  information
+- **プロンプト**: 言語モデルのインタラクションをガイドする、定義済みのテンプレートまたは指示
+- **リソース**: モデルに追加のコンテキストを提供する構造化データまたはコンテンツ
+- **ツール**: モデルがアクションを実行したり情報を取得したりできるようにする実行可能な関数
 
-Each primitive can be summarized in the following control hierarchy:
+各プリミティブは、以下の制御階層にまとめることができます。
 
-| Primitive | Control                | Description                                        | Example                         |
+| プリミティブ | 制御 | 説明 | 例 |
 | --------- | ---------------------- | -------------------------------------------------- | ------------------------------- |
-| Prompts   | User-controlled        | Interactive templates invoked by user choice       | Slash commands, menu options    |
-| Resources | Application-controlled | Contextual data attached and managed by the client | File contents, git history      |
-| Tools     | Model-controlled       | Functions exposed to the LLM to take actions       | API POST requests, file writing |
+| プロンプト | ユーザー制御 | ユーザーの選択によって呼び出される対話型テンプレート | スラッシュコマンド、メニューオプション |
+| リソース | アプリケーション制御 | クライアントによって添付および管理されるコンテキストデータ | ファイルの内容、git 履歴 |
+| ツール | モデル制御 | アクションを実行するために LLM に公開される関数 | API POST リクエスト、ファイル書き込み |
 
-Explore these key primitives in more detail below:
+これらの主要なプリミティブについて、以下でさらに詳しく見ていきましょう。
 
 <CardGroup cols={3}>
   <Card

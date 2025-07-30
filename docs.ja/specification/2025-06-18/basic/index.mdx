@@ -6,33 +6,30 @@ title: Overview
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol consists of several key components that work together:
+モデルコンテキストプロトコルは、連携して動作する複数の主要コンポーネントで構成されています。
 
-- **Base Protocol**: Core JSON-RPC message types
-- **Lifecycle Management**: Connection initialization, capability negotiation, and
-  session control
-- **Authorization**: Authentication and authorization framework for HTTP-based transports
-- **Server Features**: Resources, prompts, and tools exposed by servers
-- **Client Features**: Sampling and root directory lists provided by clients
-- **Utilities**: Cross-cutting concerns like logging and argument completion
+- **基本プロトコル**: コアとなるJSON-RPCメッセージタイプ
+- **ライフサイクル管理**: 接続の初期化、機能ネゴシエーション、セッション制御
+- **承認**: HTTPベースのトランスポートのための認証および承認フレームワーク
+- **サーバー機能**: サーバーが公開するリソース、プロンプト、ツール
+- **クライアント機能**: クライアントが提供するサンプリングとルートディレクトリリスト
+- **ユーティリティ**: ログ記録や引数補完などの横断的な関心事
 
-All implementations **MUST** support the base protocol and lifecycle management
-components. Other components **MAY** be implemented based on the specific needs of the
-application.
+すべての実装は、基本プロトコルとライフサイクル管理コンポーネントを**サポートしなければなりません**。
+その他のコンポーネントは、アプリケーションの特定のニーズに基づいて実装できます**。
 
-These protocol layers establish clear separation of concerns while enabling rich
-interactions between clients and servers. The modular design allows implementations to
-support exactly the features they need.
+これらのプロトコル層は、クライアントとサーバー間の高度なインタラクションを可能にしながら、明確な関心事の分離を確立します。
 
-## Messages
+モジュール設計により、実装は必要な機能だけをサポートできます。
 
-All messages between MCP clients and servers **MUST** follow the
-[JSON-RPC 2.0](https://www.jsonrpc.org/specification) specification. The protocol defines
-these types of messages:
+## メッセージ
 
-### Requests
+MCPクライアントとサーバー間のすべてのメッセージは、[JSON-RPC 2.0](https://www.jsonrpc.org/specification)仕様に**準拠する必要があります**。
+このプロトコルでは、以下の種類のメッセージが定義されています。
 
-Requests are sent from the client to the server or vice versa, to initiate an operation.
+### リクエスト
+
+リクエストは、操作を開始するためにクライアントからサーバーへ、またはサーバーからクライアントへ送信されます。
 
 ```typescript
 {
@@ -45,14 +42,13 @@ Requests are sent from the client to the server or vice versa, to initiate an op
 }
 ```
 
-- Requests **MUST** include a string or integer ID.
-- Unlike base JSON-RPC, the ID **MUST NOT** be `null`.
-- The request ID **MUST NOT** have been previously used by the requestor within the same
-  session.
+- リクエストには文字列または整数の ID を含める必要があります。
+- 基本的な JSON-RPC とは異なり、ID は `null` であってはなりません。
+- リクエスト ID は、リクエスト元が同じセッション内で以前に使用してはなりません。
 
-### Responses
+### レスポンス
 
-Responses are sent in reply to requests, containing the result or error of the operation.
+レスポンスはリクエストへの応答として送信され、操作の結果またはエラーが含まれます。
 
 ```typescript
 {
@@ -69,18 +65,15 @@ Responses are sent in reply to requests, containing the result or error of the o
 }
 ```
 
-- Responses **MUST** include the same ID as the request they correspond to.
-- **Responses** are further sub-categorized as either **successful results** or
-  **errors**. Either a `result` or an `error` **MUST** be set. A response **MUST NOT**
-  set both.
-- Results **MAY** follow any JSON object structure, while errors **MUST** include an
-  error code and message at minimum.
-- Error codes **MUST** be integers.
+- レスポンスには、対応するリクエストと同じIDが**含まれている必要があります**。
+- **レスポンス**はさらに**成功結果**または**エラー**に分類されます。`result`または`error`のいずれかが**必ず**設定されなければなりません。レスポンスでは両方を設定してはなりません**。
+- 結果は任意のJSONオブジェクト構造に従っても構いません**が、エラーには少なくともエラーコードとメッセージが**含まれている必要があります**。
+- エラーコードは整数でなければなりません**。
 
-### Notifications
+### 通知
 
-Notifications are sent from the client to the server or vice versa, as a one-way message.
-The receiver **MUST NOT** send a response.
+通知は、クライアントからサーバーへ、またはサーバーからクライアントへ、一方向のメッセージとして送信されます。
+受信者は**応答を送信してはなりません**。
 
 ```typescript
 {
@@ -92,58 +85,45 @@ The receiver **MUST NOT** send a response.
 }
 ```
 
-- Notifications **MUST NOT** include an ID.
+- 通知には ID を含めることはできません。
 
-## Auth
+## 認証
 
-MCP provides an [Authorization](/specification/2025-06-18/basic/authorization) framework for use with HTTP.
-Implementations using an HTTP-based transport **SHOULD** conform to this specification,
-whereas implementations using STDIO transport **SHOULD NOT** follow this specification,
-and instead retrieve credentials from the environment.
+MCP は、HTTP で使用するための [認可](/specification/2025-06-18/basic/authorization) フレームワークを提供します。
+HTTP ベースのトランスポートを使用する実装は**この仕様に準拠するべき**ですが、STDIO トランスポートを使用する実装は**この仕様に準拠すべき**ではなく、環境から資格情報を取得する必要があります。
 
-Additionally, clients and servers **MAY** negotiate their own custom authentication and
-authorization strategies.
+さらに、クライアントとサーバーは、独自のカスタム認証および認可戦略をネゴシエートできます**。
 
-For further discussions and contributions to the evolution of MCP’s auth mechanisms, join
-us in
-[GitHub Discussions](https://github.com/modelcontextprotocol/specification/discussions)
-to help shape the future of the protocol!
+MCP の認証メカニズムの進化に関するさらなる議論や貢献については、[GitHub ディスカッション](https://github.com/modelcontextprotocol/specification/discussions) にご参加いただき、プロトコルの将来像を形作ってください。
 
-## Schema
+## スキーマ
 
-The full specification of the protocol is defined as a
-[TypeScript schema](https://github.com/modelcontextprotocol/specification/blob/main/schema/2025-06-18/schema.ts).
-This is the source of truth for all protocol messages and structures.
+プロトコルの完全な仕様は、[TypeScript スキーマ](https://github.com/modelcontextprotocol/specification/blob/main/schema/2025-06-18/schema.ts) として定義されています。
+これは、すべてのプロトコルメッセージと構造の信頼できる情報源です。
 
-There is also a
-[JSON Schema](https://github.com/modelcontextprotocol/specification/blob/main/schema/2025-06-18/schema.json),
-which is automatically generated from the TypeScript source of truth, for use with
-various automated tooling.
+また、[JSON スキーマ](https://github.com/modelcontextprotocol/specification/blob/main/schema/2025-06-18/schema.json) も存在します。これは、TypeScript の信頼できる情報源から自動的に生成され、さまざまな自動化ツールで使用できます。
 
-### General fields
+### 一般フィールド
 
 #### `_meta`
 
-The `_meta` property/parameter is reserved by MCP to allow clients and servers
-to attach additional metadata to their interactions.
+`_meta` プロパティ/パラメータは、クライアントとサーバーが相互作用に追加のメタデータを添付できるようにするために、MCP によって予約されています。
 
-Certain key names are reserved by MCP for protocol-level metadata, as specified below;
-implementations MUST NOT make assumptions about values at these keys.
+特定のキー名は、以下に指定されているように、プロトコルレベルのメタデータ用に MCP によって予約されています。
+実装では、これらのキーの値について想定してはなりません。
 
-Additionally, definitions in the [schema](https://github.com/modelcontextprotocol/specification/blob/main/schema/2025-06-18/schema.ts)
-may reserve particular names for purpose-specific metadata, as declared in those definitions.
+さらに、[スキーマ](https://github.com/modelcontextprotocol/specification/blob/main/schema/2025-06-18/schema.ts) 内の定義では、定義内で宣言されているように、目的固有のメタデータ用に特定の名前を予約する場合があります。
 
-**Key name format:** valid `_meta` key names have two segments: an optional **prefix**, and a **name**.
+**キー名の形式:** 有効な `_meta` キー名は、オプションの **プレフィックス** と **名前** の 2 つのセグメントで構成されます。
 
-**Prefix:**
+**プレフィックス:**
 
-- If specified, MUST be a series of labels separated by dots (`.`), followed by a slash (`/`).
-  - Labels MUST start with a letter and end with a letter or digit; interior characters can be letters, digits, or hyphens (`-`).
-- Any prefix beginning with zero or more valid labels, followed by `modelcontextprotocol` or `mcp`, followed by any valid label,
-  is **reserved** for MCP use.
-  - For example: `modelcontextprotocol.io/`, `mcp.dev/`, `api.modelcontextprotocol.org/`, and `tools.mcp.com/` are all reserved.
+- 指定する場合は、ドット (`.`) で区切られた一連のラベルと、それに続くスラッシュ (`/`) でなければなりません。
+  - ラベルは文字で始まり、文字または数字で終わる必要があります。間の文字には、文字、数字、またはハイフン (`-`) を使用できます。
+- 0 個以上の有効なラベルで始まり、その後に `modelcontextprotocol` または `mcp` が続き、その後に任意の有効なラベルが続くプレフィックスは、MCP 用に **予約済み** です。
+  - たとえば、`modelcontextprotocol.io/`、`mcp.dev/`、`api.modelcontextprotocol.org/`、`tools.mcp.com/` はすべて予約済みです。
 
-**Name:**
+**名前:**
 
-- Unless empty, MUST begin and end with an alphanumeric character (`[a-z0-9A-Z]`).
-- MAY contain hyphens (`-`), underscores (`_`), dots (`.`), and alphanumerics in between.
+- 空でない限り、先頭と末尾は英数字 (`[a-z0-9A-Z]`) でなければなりません。
+- ハイフン (`-`)、アンダースコア (`_`)、ドット (`.`)、および間に英数字を含めることができます。

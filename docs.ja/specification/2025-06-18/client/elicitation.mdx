@@ -8,43 +8,37 @@ title: Elicitation
 
 <Note>
 
-Elicitation is newly introduced in this version of the MCP specification and its design may evolve in future protocol versions.
+MCP 仕様のこのバージョンでは、Elicisation が新たに導入されており、その設計は将来のプロトコル バージョンで進化する可能性があります。
 
 </Note>
 
-The Model Context Protocol (MCP) provides a standardized way for servers to request additional
-information from users through the client during interactions. This flow allows clients to
-maintain control over user interactions and data sharing while enabling servers to gather
-necessary information dynamically.
-Servers request structured data from users with JSON schemas to validate responses.
+モデルコンテキストプロトコル（MCP）は、サーバーがクライアントを介してユーザーとのやり取り中にユーザーに追加情報を要求するための標準化された方法を提供します。
+このフローにより、クライアントはユーザーとのやり取りとデータ共有を制御しながら、サーバーが必要な情報を動的に収集できるようになります。
+サーバーは、JSONスキーマを使用して構造化データをユーザーに要求し、レスポンスを検証します。
 
-## User Interaction Model
+## ユーザーインタラクションモデル
 
-Elicitation in MCP allows servers to implement interactive workflows by enabling user input
-requests to occur _nested_ inside other MCP server features.
+MCPにおける誘導（Elicitation）は、ユーザー入力リクエストを他のMCPサーバー機能内にネストして発生させることで、サーバーがインタラクティブなワークフローを実装することを可能にします。
 
-Implementations are free to expose elicitation through any interface pattern that suits
-their needs&mdash;the protocol itself does not mandate any specific user interaction
-model.
+実装は、ニーズに合った任意のインターフェースパターンを通じて誘導を自由に公開できます。プロトコル自体は特定のユーザーインタラクションモデルを必須としていません。
 
 <Warning>
 
-For trust & safety and security:
+信頼性、安全性、セキュリティのために：
 
-- Servers **MUST NOT** use elicitation to request sensitive information.
+- サーバーは、機密情報を要求するために誘導法を使用してはなりません。
 
-Applications **SHOULD**:
+アプリケーションは、次の事項を行うべきです。
 
-- Provide UI that makes it clear which server is requesting information
-- Allow users to review and modify their responses before sending
-- Respect user privacy and provide clear decline and cancel options
+- どのサーバーが情報を要求しているかを明確に示す UI を提供する
+- ユーザーが送信前に応答内容を確認・修正できるようにする
+- ユーザーのプライバシーを尊重し、明確な拒否およびキャンセルの選択肢を提供する
 
 </Warning>
 
-## Capabilities
+## 機能
 
-Clients that support elicitation **MUST** declare the `elicitation` capability during
-[initialization](/specification/2025-06-18/basic/lifecycle#initialization):
+Elicitation をサポートするクライアントは、[初期化](/specification/2025-06-18/basic/lifecycle#initialization) 中に `elicitation` 機能を宣言する必要があります。**MUST**
 
 ```json
 {
@@ -58,11 +52,11 @@ Clients that support elicitation **MUST** declare the `elicitation` capability d
 
 ### Creating Elicitation Requests
 
-To request information from a user, servers send an `elicitation/create` request:
+ユーザーから情報をリクエストするために、サーバーは `elicitation/create` リクエストを送信します。
 
-#### Simple Text Request
+#### シンプルなテキストリクエスト
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -84,7 +78,7 @@ To request information from a user, servers send an `elicitation/create` request
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -99,9 +93,9 @@ To request information from a user, servers send an `elicitation/create` request
 }
 ```
 
-#### Structured Data Request
+#### 構造化データリクエスト
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -134,7 +128,7 @@ To request information from a user, servers send an `elicitation/create` request
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -151,7 +145,7 @@ To request information from a user, servers send an `elicitation/create` request
 }
 ```
 
-**Reject Response Example:**
+**拒否レスポンスの例:**
 
 ```json
 {
@@ -163,7 +157,7 @@ To request information from a user, servers send an `elicitation/create` request
 }
 ```
 
-**Cancel Response Example:**
+**キャンセルレスポンスの例:**
 
 ```json
 {
@@ -175,7 +169,7 @@ To request information from a user, servers send an `elicitation/create` request
 }
 ```
 
-## Message Flow
+## メッセージフロー
 
 ```mermaid
 sequenceDiagram
@@ -196,9 +190,9 @@ sequenceDiagram
     Note over Server: Continue processing with new information
 ```
 
-## Request Schema
+## リクエストスキーマ
 
-The `requestedSchema` field allows servers to define the structure of the expected response using a restricted subset of JSON Schema. To simplify implementation for clients, elicitation schemas are limited to flat objects with primitive properties only:
+`requestedSchema` フィールドを使用すると、サーバーは JSON スキーマの限定されたサブセットを使用して、期待されるレスポンスの構造を定義できます。クライアントの実装を簡素化するため、抽出スキーマはプリミティブプロパティのみを持つフラットオブジェクトに制限されています。
 
 ```json
 "requestedSchema": {
@@ -219,11 +213,11 @@ The `requestedSchema` field allows servers to define the structure of the expect
 }
 ```
 
-### Supported Schema Types
+### サポートされているスキーマ型
 
-The schema is restricted to these primitive types:
+スキーマは以下のプリミティブ型に制限されています。
 
-1. **String Schema**
+1. **文字列スキーマ**
 
    ```json
    {
@@ -238,7 +232,7 @@ The schema is restricted to these primitive types:
 
    Supported formats: `email`, `uri`, `date`, `date-time`
 
-2. **Number Schema**
+2. **数値スキーマ**
 
    ```json
    {
@@ -250,7 +244,7 @@ The schema is restricted to these primitive types:
    }
    ```
 
-3. **Boolean Schema**
+3. **ブールスキーマ**
 
    ```json
    {
@@ -261,7 +255,8 @@ The schema is restricted to these primitive types:
    }
    ```
 
-4. **Enum Schema**
+4. **列挙型スキーマ**
+
    ```json
    {
      "type": "string",
@@ -272,17 +267,17 @@ The schema is restricted to these primitive types:
    }
    ```
 
-Clients can use this schema to:
+クライアントはこのスキーマを使用して、次のことを行うことができます。
 
-1. Generate appropriate input forms
-2. Validate user input before sending
-3. Provide better guidance to users
+1. 適切な入力フォームを生成する
+2. 送信前にユーザー入力を検証する
+3. ユーザーへの適切なガイダンスを提供する
 
-Note that complex nested structures, arrays of objects, and other advanced JSON Schema features are intentionally not supported to simplify client implementation.
+クライアント実装を簡素化するため、複雑なネスト構造、オブジェクトの配列、その他の高度なJSONスキーマ機能は意図的にサポートされていないことに注意してください。
 
-## Response Actions
+## 応答アクション
 
-Elicitation responses use a three-action model to clearly distinguish between different user actions:
+誘導応答では、3つのアクションモデルを使用して、異なるユーザーアクションを明確に区別します。
 
 ```json
 {
@@ -298,34 +293,35 @@ Elicitation responses use a three-action model to clearly distinguish between di
 }
 ```
 
-The three response actions are:
+レスポンスアクションは3つあります。
 
-1. **Accept** (`action: "accept"`): User explicitly approved and submitted with data
+1. **承認** (`action: "accept"`): ユーザーが明示的に承認し、データを送信しました。
 
-   - The `content` field contains the submitted data matching the requested schema
-   - Example: User clicked "Submit", "OK", "Confirm", etc.
+  - `content` フィールドには、要求されたスキーマに一致する送信データが含まれます。
+  - 例: ユーザーが「送信」、「OK」、「確認」などをクリックした。
 
-2. **Decline** (`action: "decline"`): User explicitly declined the request
+2. **拒否** (`action: "decline"`): ユーザーがリクエストを明示的に拒否しました。
 
-   - The `content` field is typically omitted
-   - Example: User clicked "Reject", "Decline", "No", etc.
+  - `content` フィールドは通常省略されます。
+  - 例: ユーザーが「拒否」、「拒否」、「いいえ」などをクリックした。
 
-3. **Cancel** (`action: "cancel"`): User dismissed without making an explicit choice
-   - The `content` field is typically omitted
-   - Example: User closed the dialog, clicked outside, pressed Escape, etc.
+3. **キャンセル** (`action: "cancel"`): ユーザーが明示的な選択を行わずにダイアログを閉じました。
 
-Servers should handle each state appropriately:
+  - `content` フィールドは通常省略されます。
+  - 例: ユーザーがダイアログを閉じた、ダイアログの外側をクリックした、Esc キーを押したなど。
 
-- **Accept**: Process the submitted data
-- **Decline**: Handle explicit decline (e.g., offer alternatives)
-- **Cancel**: Handle dismissal (e.g., prompt again later)
+サーバーは各状態を適切に処理する必要があります。
 
-## Security Considerations
+  - **承認**: 送信されたデータを処理する。
+  - **拒否**: 明示的な拒否を処理する (例: 代替案を提示する)。
+  - **キャンセル**: 拒否を処理する（例：後で再度プロンプトを表示する）
 
-1. Servers **MUST NOT** request sensitive information through elicitation
-2. Clients **SHOULD** implement user approval controls
-3. Both parties **SHOULD** validate elicitation content against the provided schema
-4. Clients **SHOULD** provide clear indication of which server is requesting information
-5. Clients **SHOULD** allow users to decline elicitation requests at any time
-6. Clients **SHOULD** implement rate limiting
-7. Clients **SHOULD** present elicitation requests in a way that makes it clear what information is being requested and why
+## セキュリティに関する考慮事項
+
+1. サーバーは、誘導を通じて機密情報を要求してはなりません（**してはいけません**）。
+2. クライアントは、ユーザー承認制御を実装する必要があります（**すべき**）。
+3. 双方は、提供されたスキーマに基づいて誘導コンテンツを検証する必要があります（**すべき**）。
+4. クライアントは、どのサーバーが情報を要求しているかを明確に示す必要があります（**すべき**）。
+5. クライアントは、ユーザーがいつでも誘導要求を拒否できるようにする必要があります（**すべき**）。
+6. クライアントは、レート制限を実装する必要があります（**すべき**）。
+7. クライアントは、どのような情報が要求され、なぜ要求されるのかを明確に示す方法で誘導要求を提示する必要があります（**すべき**）。

@@ -6,28 +6,24 @@ title: Pagination
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) supports paginating list operations that may return
-large result sets. Pagination allows servers to yield results in smaller chunks rather
-than all at once.
+モデルコンテキストプロトコル（MCP）は、大規模な結果セットを返す可能性のあるリスト操作のページ分割をサポートします。
+ページ分割により、サーバーは結果を一度にではなく、小さなチャンクで生成できます。
 
-Pagination is especially important when connecting to external services over the
-internet, but also useful for local integrations to avoid performance issues with large
-data sets.
+ページ分割は、インターネット経由で外部サービスに接続する場合に特に重要ですが、大規模なデータセットによるパフォーマンスの問題を回避するためにローカル統合にも役立ちます。
 
-## Pagination Model
+## ページネーションモデル
 
-Pagination in MCP uses an opaque cursor-based approach, instead of numbered pages.
+MCP のページネーションは、番号付きページではなく、カーソルベースの不透明なアプローチを採用しています。
 
-- The **cursor** is an opaque string token, representing a position in the result set
-- **Page size** is determined by the server, and clients **MUST NOT** assume a fixed page
-  size
+- **カーソル** は、結果セット内の位置を表す不透明な文字列トークンです。
+- **ページサイズ** はサーバーによって決定され、クライアントは固定ページサイズを想定してはなりません。**してはなりません**。
 
-## Response Format
+## レスポンス形式
 
-Pagination starts when the server sends a **response** that includes:
+ページネーションは、サーバーが以下の情報を含む**レスポンス**を送信した時点で開始されます。
 
-- The current page of results
-- An optional `nextCursor` field if more results exist
+- 現在の結果ページ
+- 結果がさらに存在する場合のオプションの`nextCursor`フィールド
 
 ```json
 {
@@ -40,10 +36,9 @@ Pagination starts when the server sends a **response** that includes:
 }
 ```
 
-## Request Format
+## リクエスト形式
 
-After receiving a cursor, the client can _continue_ paginating by issuing a request
-including that cursor:
+カーソルを受け取った後、クライアントはそのカーソルを含むリクエストを発行することでページングを続行できます。
 
 ```json
 {
@@ -55,7 +50,7 @@ including that cursor:
 }
 ```
 
-## Pagination Flow
+## ページネーションフロー
 
 ```mermaid
 sequenceDiagram
@@ -69,32 +64,33 @@ sequenceDiagram
     end
 ```
 
-## Operations Supporting Pagination
+## ページネーションをサポートする操作
 
-The following MCP operations support pagination:
+以下の MCP 操作はページネーションをサポートします。
 
-- `resources/list` - List available resources
-- `resources/templates/list` - List resource templates
-- `prompts/list` - List available prompts
-- `tools/list` - List available tools
+- `resources/list` - 利用可能なリソースの一覧表示
+- `resources/templates/list` - リソーステンプレートの一覧表示
+- `prompts/list` - 利用可能なプロンプトの一覧表示
+- `tools/list` - 利用可能なツールの一覧表示
 
-## Implementation Guidelines
+## 実装ガイドライン
 
-1. Servers **SHOULD**:
+1. サーバーは**すべき**です。
 
-   - Provide stable cursors
-   - Handle invalid cursors gracefully
+  - 安定したカーソルを提供する
+  - 無効なカーソルを適切に処理する
 
-2. Clients **SHOULD**:
+2. クライアントは**すべき**です。
 
-   - Treat a missing `nextCursor` as the end of results
-   - Support both paginated and non-paginated flows
+  - `nextCursor` が見つからない場合は、結果の終了として扱う
+  - ページネーション付きフローとページネーションなしフローの両方をサポートする
 
-3. Clients **MUST** treat cursors as opaque tokens:
-   - Don't make assumptions about cursor format
-   - Don't attempt to parse or modify cursors
-   - Don't persist cursors across sessions
+3. クライアントはカーソルを不透明なトークンとして**扱わなければならない**です。
 
-## Error Handling
+  - カーソルの形式を仮定しない
+  - カーソルの解析や変更を試みない
+  - セッション間でカーソルを保持しない
 
-Invalid cursors **SHOULD** result in an error with code -32602 (Invalid params).
+## エラー処理
+
+無効なカーソルは、コードエラーとなる**べき**です。 -32602 (無効なパラメータ)。

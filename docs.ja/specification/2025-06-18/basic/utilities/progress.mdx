@@ -6,18 +6,15 @@ title: Progress
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) supports optional progress tracking for long-running
-operations through notification messages. Either side can send progress notifications to
-provide updates about operation status.
+モデルコンテキストプロトコル（MCP）は、通知メッセージを通じて、長時間実行される操作の進行状況を追跡するオプションをサポートしています。
+どちらの側も進行状況通知を送信して、操作のステータスに関する最新情報を提供できます。
 
-## Progress Flow
+## 進捗フロー
 
-When a party wants to _receive_ progress updates for a request, it includes a
-`progressToken` in the request metadata.
+リクエストの進捗状況の更新を_受信_したい場合、リクエストメタデータに「progressToken」を含めます。
 
-- Progress tokens **MUST** be a string or integer value
-- Progress tokens can be chosen by the sender using any means, but **MUST** be unique
-  across all active requests.
+- 進捗トークンは文字列または整数値である必要があります。
+- 進捗トークンは送信者が任意の方法で選択できますが、アクティブなリクエスト全体で一意である必要があります。
 
 ```json
 {
@@ -32,12 +29,12 @@ When a party wants to _receive_ progress updates for a request, it includes a
 }
 ```
 
-The receiver **MAY** then send progress notifications containing:
+受信者は**送信してもよい**（MAY）:
 
-- The original progress token
-- The current progress value so far
-- An optional "total" value
-- An optional "message" value
+- 元の進捗トークン
+- これまでの進捗値
+- オプションの「合計」値
+- オプションの「メッセージ」値
 
 ```json
 {
@@ -52,22 +49,20 @@ The receiver **MAY** then send progress notifications containing:
 }
 ```
 
-- The `progress` value **MUST** increase with each notification, even if the total is
-  unknown.
-- The `progress` and the `total` values **MAY** be floating point.
-- The `message` field **SHOULD** provide relevant human readable progress information.
+- `progress` 値は、合計が不明な場合でも、通知ごとに増加する必要があります。
+- `progress` 値と `total` 値は浮動小数点数であっても構いません。
+- `message` フィールドには、人間が判読できる適切な進捗情報を提供する必要があります。
 
-## Behavior Requirements
+## 動作要件
 
-1. Progress notifications **MUST** only reference tokens that:
+1. 進捗通知は、以下のトークンのみを参照する必要があります。
+  - アクティブなリクエストで提供されたトークン
+  - 進行中の操作に関連付けられているトークン
 
-   - Were provided in an active request
-   - Are associated with an in-progress operation
-
-2. Receivers of progress requests **MAY**:
-   - Choose not to send any progress notifications
-   - Send notifications at whatever frequency they deem appropriate
-   - Omit the total value if unknown
+2. 進捗リクエストの受信者は、以下の操作を実行できます。
+  - 進捗通知を送信しない
+  - 適切と判断した頻度で通知を送信する
+  - 合計値が不明な場合は省略する
 
 ```mermaid
 sequenceDiagram
@@ -86,8 +81,8 @@ sequenceDiagram
     Receiver->>Sender: Method response
 ```
 
-## Implementation Notes
+## 実装上の注意
 
-- Senders and receivers **SHOULD** track active progress tokens
-- Both parties **SHOULD** implement rate limiting to prevent flooding
-- Progress notifications **MUST** stop after completion
+- 送信側と受信側は、アクティブな進捗トークンを追跡する**べき**です
+- 双方とも、フラッディングを防ぐためレート制限を実装する**べき**です
+- 進捗通知は完了後に停止する**べき**です

@@ -6,28 +6,22 @@ title: Roots
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) provides a standardized way for clients to expose
-filesystem "roots" to servers. Roots define the boundaries of where servers can operate
-within the filesystem, allowing them to understand which directories and files they have
-access to. Servers can request the list of roots from supporting clients and receive
-notifications when that list changes.
+モデルコンテキストプロトコル（MCP）は、クライアントがファイルシステムの「ルート」をサーバーに公開するための標準化された方法を提供します。
+ルートは、サーバーがファイルシステム内で操作できる範囲の境界を定義し、サーバーがアクセスできるディレクトリとファイルを把握できるようにします。
+サーバーは、サポートするクライアントにルートのリストを要求し、リストが変更されたときに通知を受け取ることができます。
 
-## User Interaction Model
+## ユーザーインタラクションモデル
 
-Roots in MCP are typically exposed through workspace or project configuration interfaces.
+MCP におけるルートは通常、ワークスペースまたはプロジェクト設定インターフェースを通じて公開されます。
 
-For example, implementations could offer a workspace/project picker that allows users to
-select directories and files the server should have access to. This can be combined with
-automatic workspace detection from version control systems or project files.
+例えば、実装では、ユーザーがサーバーにアクセスを許可するディレクトリやファイルを選択できるワークスペース/プロジェクトピッカーを提供できます。
+これは、バージョン管理システムやプロジェクトファイルからのワークスペースの自動検出と組み合わせることができます。
 
-However, implementations are free to expose roots through any interface pattern that
-suits their needs&mdash;the protocol itself does not mandate any specific user
-interaction model.
+ただし、実装はニーズに合った任意のインターフェースパターンを通じてルートを自由に公開できます。プロトコル自体は特定のユーザーインタラクションモデルを必須としていません。
 
-## Capabilities
+## 機能
 
-Clients that support roots **MUST** declare the `roots` capability during
-[initialization](/specification/2025-06-18/basic/lifecycle#initialization):
+ルートをサポートするクライアントは、[初期化](/specification/2025-06-18/basic/lifecycle#initialization) 中に `roots` 機能を宣言する必要があります。**必須**
 
 ```json
 {
@@ -39,16 +33,15 @@ Clients that support roots **MUST** declare the `roots` capability during
 }
 ```
 
-`listChanged` indicates whether the client will emit notifications when the list of roots
-changes.
+`listChanged` は、ルートのリストが変更されたときにクライアントが通知を発行するかどうかを示します。
 
-## Protocol Messages
+## プロトコルメッセージ
 
-### Listing Roots
+### ルートの一覧表示
 
-To retrieve roots, servers send a `roots/list` request:
+ルートを取得するために、サーバーは `roots/list` リクエストを送信します。
 
-**Request:**
+**リクエスト：**
 
 ```json
 {
@@ -58,7 +51,7 @@ To retrieve roots, servers send a `roots/list` request:
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -75,9 +68,9 @@ To retrieve roots, servers send a `roots/list` request:
 }
 ```
 
-### Root List Changes
+### ルートリストの変更
 
-When roots change, clients that support `listChanged` **MUST** send a notification:
+ルートが変更された場合、`listChanged` をサポートするクライアントは**必ず**通知を送信する必要があります。
 
 ```json
 {
@@ -86,7 +79,7 @@ When roots change, clients that support `listChanged` **MUST** send a notificati
 }
 ```
 
-## Message Flow
+## メッセージフロー
 
 ```mermaid
 sequenceDiagram
@@ -103,19 +96,18 @@ sequenceDiagram
     Client-->>Server: Updated roots
 ```
 
-## Data Types
+## データ型
 
-### Root
+### ルート
 
-A root definition includes:
+ルート定義には以下が含まれます。
 
-- `uri`: Unique identifier for the root. This **MUST** be a `file://` URI in the current
-  specification.
-- `name`: Optional human-readable name for display purposes.
+- `uri`: ルートの一意の識別子。現在の仕様では、`file://` URI でなければなりません。
+- `name`: 表示用に人間が読める名前（任意）。
 
-Example roots for different use cases:
+様々なユースケースにおけるルートの例：
 
-#### Project Directory
+#### プロジェクトディレクトリ
 
 ```json
 {
@@ -124,7 +116,7 @@ Example roots for different use cases:
 }
 ```
 
-#### Multiple Repositories
+#### 複数のリポジトリ
 
 ```json
 [
@@ -139,14 +131,14 @@ Example roots for different use cases:
 ]
 ```
 
-## Error Handling
+## エラー処理
 
-Clients **SHOULD** return standard JSON-RPC errors for common failure cases:
+クライアントは、一般的な失敗ケースに対して標準の JSON-RPC エラーを返す必要があります (SHOULD)。
 
-- Client does not support roots: `-32601` (Method not found)
-- Internal errors: `-32603`
+- クライアントがルートをサポートしていません: `-32601` (メソッドが見つかりません)
+- 内部エラー: `-32603`
 
-Example error:
+エラー例:
 
 ```json
 {
@@ -162,31 +154,33 @@ Example error:
 }
 ```
 
-## Security Considerations
+## セキュリティに関する考慮事項
 
-1. Clients **MUST**:
+1. クライアントは**必須**です。
 
-   - Only expose roots with appropriate permissions
-   - Validate all root URIs to prevent path traversal
-   - Implement proper access controls
-   - Monitor root accessibility
+  - 適切な権限を持つルートのみを公開する。
+  - パストラバーサルを防止するため、すべてのルートURIを検証する。
+  - 適切なアクセス制御を実装する。
+  - ルートのアクセス可能性を監視する。
 
-2. Servers **SHOULD**:
-   - Handle cases where roots become unavailable
-   - Respect root boundaries during operations
-   - Validate all paths against provided roots
+2. サーバーは**推奨**です。
 
-## Implementation Guidelines
+  - ルートが利用できなくなった場合に対処する。
+  - 操作中はルート境界を尊重する。
+  - 提供されたルートに対してすべてのパスを検証する。
 
-1. Clients **SHOULD**:
+## 実装ガイドライン
 
-   - Prompt users for consent before exposing roots to servers
-   - Provide clear user interfaces for root management
-   - Validate root accessibility before exposing
-   - Monitor for root changes
+1. クライアントは**すべき**:
 
-2. Servers **SHOULD**:
-   - Check for roots capability before usage
-   - Handle root list changes gracefully
-   - Respect root boundaries in operations
-   - Cache root information appropriately
+  - ルート情報をサーバーに公開する前に、ユーザーの同意を求める
+  - ルート情報管理用の明確なユーザーインターフェースを提供する
+  - 公開する前にルート情報へのアクセス可能性を検証する
+  - ルート情報の変更を監視する
+
+2. サーバーは**すべき**:
+
+  - 使用前にルート権限を確認する
+  - ルートリストの変更を適切に処理する
+  - 操作においてルート情報の境界を尊重する
+  - ルート情報を適切にキャッシュする

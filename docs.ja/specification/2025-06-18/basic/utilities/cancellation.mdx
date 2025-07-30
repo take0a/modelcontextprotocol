@@ -6,17 +6,15 @@ title: Cancellation
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) supports optional cancellation of in-progress requests
-through notification messages. Either side can send a cancellation notification to
-indicate that a previously-issued request should be terminated.
+モデルコンテキストプロトコル（MCP）は、通知メッセージを通じて進行中のリクエストをオプションでキャンセルすることをサポートしています。
+どちらの側も、以前に発行されたリクエストを終了する必要があることを示すキャンセル通知を送信できます。
 
-## Cancellation Flow
+## キャンセルフロー
 
-When a party wants to cancel an in-progress request, it sends a `notifications/cancelled`
-notification containing:
+進行中のリクエストをキャンセルする場合、以下の情報を含む「notifications/cancelled」通知を送信します。
 
-- The ID of the request to cancel
-- An optional reason string that can be logged or displayed
+- キャンセルするリクエストのID
+- ログに記録または表示できるオプションの理由文字列
 
 ```json
 {
@@ -29,29 +27,27 @@ notification containing:
 }
 ```
 
-## Behavior Requirements
+## B動作要件
 
-1. Cancellation notifications **MUST** only reference requests that:
-   - Were previously issued in the same direction
-   - Are believed to still be in-progress
-2. The `initialize` request **MUST NOT** be cancelled by clients
-3. Receivers of cancellation notifications **SHOULD**:
-   - Stop processing the cancelled request
-   - Free associated resources
-   - Not send a response for the cancelled request
-4. Receivers **MAY** ignore cancellation notifications if:
-   - The referenced request is unknown
-   - Processing has already completed
-   - The request cannot be cancelled
-5. The sender of the cancellation notification **SHOULD** ignore any response to the
-   request that arrives afterward
+1. キャンセル通知は、以下のリクエストのみを参照する必要があります。
+   - 同じ方向に以前に発行されたリクエスト
+   - まだ処理中であると考えられるリクエスト
+2. `initialize` リクエストは、クライアントによってキャンセルされてはなりません。
+3. キャンセル通知の受信者は、以下の処理を行うべきです。
+   - キャンセルされたリクエストの処理を停止する
+   - 関連付けられたリソースを解放する
+   - キャンセルされたリクエストに対するレスポンスを送信しない
+4. 以下の場合、受信者はキャンセル通知を無視しても構いません。
+   - 参照されたリクエストが不明な場合
+   - 処理が既に完了している場合
+   - リクエストをキャンセルできない場合
+5. キャンセル通知の送信者は、それ以降に到着するリクエストに対するレスポンスを無視すべきです。
 
-## Timing Considerations
+## タイミングに関する考慮事項
 
-Due to network latency, cancellation notifications may arrive after request processing
-has completed, and potentially after a response has already been sent.
+ネットワークの遅延により、キャンセル通知はリクエスト処理が完了した後、場合によってはレスポンスが送信された後に届くことがあります。
 
-Both parties **MUST** handle these race conditions gracefully:
+双方は、これらの競合状態を適切に処理する必要があります。
 
 ```mermaid
 sequenceDiagram
@@ -68,18 +64,17 @@ sequenceDiagram
    end
 ```
 
-## Implementation Notes
+## 実装上の注意
 
-- Both parties **SHOULD** log cancellation reasons for debugging
-- Application UIs **SHOULD** indicate when cancellation is requested
+- 双方とも、デバッグのためにキャンセル理由をログに記録するべきです（**SHOULD**）
+- アプリケーションUIは、キャンセルが要求されたときにそれを表示するべきです（**SHOULD**）
 
-## Error Handling
+## エラー処理
 
-Invalid cancellation notifications **SHOULD** be ignored:
+無効なキャンセル通知は**無視されるべき**です。
 
-- Unknown request IDs
-- Already completed requests
-- Malformed notifications
+- 不明なリクエストID
+- すでに完了したリクエスト
+- 不正な通知
 
-This maintains the "fire and forget" nature of notifications while allowing for race
-conditions in asynchronous communication.
+これにより、非同期通信における競合状態を許容しながらも、通知の「ファイア・アンド・フォーゲット」という性質が維持されます。

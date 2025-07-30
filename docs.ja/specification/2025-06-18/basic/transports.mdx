@@ -6,33 +6,28 @@ title: Transports
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-MCP uses JSON-RPC to encode messages. JSON-RPC messages **MUST** be UTF-8 encoded.
+MCPはJSON-RPCを使用してメッセージをエンコードします。JSON-RPCメッセージはUTF-8でエンコードされている必要があります（**必須**）。
 
-The protocol currently defines two standard transport mechanisms for client-server
-communication:
+このプロトコルは現在、クライアント・サーバー間通信用の2つの標準トランスポートメカニズムを定義しています。
 
-1. [stdio](#stdio), communication over standard in and standard out
+1. [stdio](#stdio)：標準入力と標準出力を介した通信
 2. [Streamable HTTP](#streamable-http)
 
-Clients **SHOULD** support stdio whenever possible.
+クライアントは可能な限りstdioをサポートすべきです（**推奨**）。
 
-It is also possible for clients and servers to implement
-[custom transports](#custom-transports) in a pluggable fashion.
+クライアントとサーバーは、プラガブルな形式で[カスタムトランスポート](#custom-transports)を実装することもできます。
 
 ## stdio
 
-In the **stdio** transport:
+**stdio** トランスポートでは、次のようになります。
 
-- The client launches the MCP server as a subprocess.
-- The server reads JSON-RPC messages from its standard input (`stdin`) and sends messages
-  to its standard output (`stdout`).
-- Messages are individual JSON-RPC requests, notifications, or responses.
-- Messages are delimited by newlines, and **MUST NOT** contain embedded newlines.
-- The server **MAY** write UTF-8 strings to its standard error (`stderr`) for logging
-  purposes. Clients **MAY** capture, forward, or ignore this logging.
-- The server **MUST NOT** write anything to its `stdout` that is not a valid MCP message.
-- The client **MUST NOT** write anything to the server's `stdin` that is not a valid MCP
-  message.
+- クライアントは MCP サーバーをサブプロセスとして起動します。
+- サーバーは標準入力 (`stdin`) から JSON-RPC メッセージを読み取り、標準出力 (`stdout`) に送信します。
+- メッセージは、個々の JSON-RPC リクエスト、通知、またはレスポンスです。
+- メッセージは改行で区切られ、改行文字を含んではなりません (MUST NOT)。
+- サーバーは、ログ出力のために UTF-8 文字列を標準エラー出力 (`stderr`) に書き込むことができます (MAY)。クライアントは、このログ出力をキャプチャ、転送、または無視することができます (MAY NOT)。
+- サーバーは、有効な MCP メッセージ以外のものを `stdout` に書き込んではなりません (MUST NOT)。
+- クライアントは、有効な MCP メッセージ以外のものをサーバーの `stdin` に書き込んではなりません (MUST NOT)。
 
 ```mermaid
 sequenceDiagram
@@ -49,156 +44,102 @@ sequenceDiagram
     deactivate Server Process
 ```
 
-## Streamable HTTP
+## ストリーミング可能なHTTP
 
 <Info>
 
-This replaces the [HTTP+SSE
-transport](/specification/2024-11-05/basic/transports#http-with-sse) from
-protocol version 2024-11-05. See the [backwards compatibility](#backwards-compatibility)
-guide below.
+これは、プロトコルバージョン2024-11-05の[HTTP+SSEトランスポート](/specification/2024-11-05/basic/transports#http-with-sse)を置き換えるものです。
+以下の[後方互換性](#backwards-compatibility)ガイドをご覧ください。
 
 </Info>
 
-In the **Streamable HTTP** transport, the server operates as an independent process that
-can handle multiple client connections. This transport uses HTTP POST and GET requests.
-Server can optionally make use of
-[Server-Sent Events](https://en.wikipedia.org/wiki/Server-sent_events) (SSE) to stream
-multiple server messages. This permits basic MCP servers, as well as more feature-rich
-servers supporting streaming and server-to-client notifications and requests.
+**ストリーミング可能な HTTP** トランスポートでは、サーバーは複数のクライアント接続を処理できる独立したプロセスとして動作します。
+このトランスポートは、HTTP POST および GET リクエストを使用します。
+サーバーはオプションで [Server-Sent Events](https://en.wikipedia.org/wiki/Server-sent_events) (SSE) を利用して複数のサーバーメッセージをストリーミングできます。
+これにより、基本的な MCP サーバーだけでなく、ストリーミングやサーバーからクライアントへの通知とリクエストをサポートする機能豊富なサーバーもサポートできます。
 
-The server **MUST** provide a single HTTP endpoint path (hereafter referred to as the
-**MCP endpoint**) that supports both POST and GET methods. For example, this could be a
-URL like `https://example.com/mcp`.
+サーバーは、POST メソッドと GET メソッドの両方をサポートする単一の HTTP エンドポイントパス (以下、**MCP エンドポイント** と呼びます) を提供する必要があります。
+例えば、これは `https://example.com/mcp` のような URL になります。
 
-#### Security Warning
+#### セキュリティ警告
 
-When implementing Streamable HTTP transport:
+ストリーミング可能なHTTPトランスポートを実装する場合：
 
-1. Servers **MUST** validate the `Origin` header on all incoming connections to prevent DNS rebinding attacks
-2. When running locally, servers **SHOULD** bind only to localhost (127.0.0.1) rather than all network interfaces (0.0.0.0)
-3. Servers **SHOULD** implement proper authentication for all connections
+1. サーバーは、DNSリバインディング攻撃を防ぐため、すべての受信接続において「Origin」ヘッダーを検証する必要があります。
+2. ローカルで実行する場合、サーバーはすべてのネットワークインターフェース（0.0.0.0）ではなく、ローカルホスト（127.0.0.1）のみにバインドする必要があります。
+3. サーバーは、すべての接続に対して適切な認証を実装する必要があります。
 
-Without these protections, attackers could use DNS rebinding to interact with local MCP servers from remote websites.
+これらの保護対策がなければ、攻撃者はDNSリバインディングを利用して、リモートウェブサイトからローカルのMCPサーバーにアクセスできる可能性があります。
 
-### Sending Messages to the Server
+### サーバーへのメッセージの送信
 
-Every JSON-RPC message sent from the client **MUST** be a new HTTP POST request to the
-MCP endpoint.
+クライアントから送信されるすべての JSON-RPC メッセージは、MCP エンドポイントへの新しい HTTP POST リクエストでなければなりません。
 
-1. The client **MUST** use HTTP POST to send JSON-RPC messages to the MCP endpoint.
-2. The client **MUST** include an `Accept` header, listing both `application/json` and
-   `text/event-stream` as supported content types.
-3. The body of the POST request **MUST** be a single JSON-RPC _request_, _notification_, or _response_.
-4. If the input is a JSON-RPC _response_ or _notification_:
-   - If the server accepts the input, the server **MUST** return HTTP status code 202
-     Accepted with no body.
-   - If the server cannot accept the input, it **MUST** return an HTTP error status code
-     (e.g., 400 Bad Request). The HTTP response body **MAY** comprise a JSON-RPC _error
-     response_ that has no `id`.
-5. If the input is a JSON-RPC _request_, the server **MUST** either
-   return `Content-Type: text/event-stream`, to initiate an SSE stream, or
-   `Content-Type: application/json`, to return one JSON object. The client **MUST**
-   support both these cases.
-6. If the server initiates an SSE stream:
-   - The SSE stream **SHOULD** eventually include JSON-RPC _response_ for the
-     JSON-RPC _request_ sent in the POST body.
-   - The server **MAY** send JSON-RPC _requests_ and _notifications_ before sending the
-     JSON-RPC _response_. These messages **SHOULD** relate to the originating client
-     _request_.
-   - The server **SHOULD NOT** close the SSE stream before sending the JSON-RPC _response_
-     for the received JSON-RPC _request_, unless the [session](#session-management)
-     expires.
-   - After the JSON-RPC _response_ has been sent, the server **SHOULD** close the SSE
-     stream.
-   - Disconnection **MAY** occur at any time (e.g., due to network conditions).
-     Therefore:
-     - Disconnection **SHOULD NOT** be interpreted as the client cancelling its request.
-     - To cancel, the client **SHOULD** explicitly send an MCP `CancelledNotification`.
-     - To avoid message loss due to disconnection, the server **MAY** make the stream
-       [resumable](#resumability-and-redelivery).
+1. クライアントは、MCP エンドポイントに JSON-RPC メッセージを送信するために、HTTP POST を使用する必要があります。
+2. クライアントは、サポートされるコンテンツタイプとして `application/json` と `text/event-stream` の両方を指定した `Accept` ヘッダーを含める必要があります。
+3. POST リクエストのボディは、単一の JSON-RPC _request_、_notification_、または _response_ である必要があります。
+4. 入力が JSON-RPC _response_ または _notification_ の場合:
+  - サーバーが入力を受け入れた場合、サーバーはボディなしの HTTP ステータスコード 202 Accepted を返す必要があります。
+  - サーバーが入力を受け付けられない場合、HTTP エラーステータスコード（例：400 Bad Request）を返す必要があります。HTTP レスポンスボディは、`id` のない JSON-RPC エラーレスポンス **を ** 含む場合があります**。
+5. 入力が JSON-RPC リクエスト **の場合、サーバーは SSE ストリームを開始するために `Content-Type: text/event-stream` を返すか、1 つの JSON オブジェクトを返すために `Content-Type: application/json` を返す必要があります**。
+クライアントは、これら両方のケースをサポートする必要があります**。
+6. サーバーが SSE ストリームを開始する場合:
+  - SSE ストリームには、POST ボディで送信された JSON-RPC リクエスト **に対する JSON-RPC レスポンス **が最終的に含まれるべきです**。
+  - サーバーは、JSON-RPC レスポンス **を送信する前に、JSON-RPC リクエスト **と通知 **を送信しても構いません**。これらのメッセージは、発信元クライアントのリクエストに関連すべきです。
+  - サーバーは、[セッション](#session-management) の有効期限が切れていない限り、受信した JSON-RPC リクエストに対する JSON-RPC レスポンスを送信する前に SSE ストリームを閉じるべきではありません。
+  - JSON-RPC レスポンスが送信された後、サーバーは SSE ストリームを閉じるべきです。
+  - 切断はいつでも発生する可能性があります (例: ネットワーク状況による)。したがって、次のようになります。
+    - 切断は、クライアントがリクエストをキャンセルしたと解釈すべきではありません。
+    - キャンセルする場合、クライアントは MCP `CancelledNotification` を明示的に送信すべきです。
+    - 切断によるメッセージの損失を回避するため、サーバーはストリームを [再開可能](#resumability-and-redelivery) にすることができます。
 
-### Listening for Messages from the Server
+### サーバーからのメッセージのリッスン
 
-1. The client **MAY** issue an HTTP GET to the MCP endpoint. This can be used to open an
-   SSE stream, allowing the server to communicate to the client, without the client first
-   sending data via HTTP POST.
-2. The client **MUST** include an `Accept` header, listing `text/event-stream` as a
-   supported content type.
-3. The server **MUST** either return `Content-Type: text/event-stream` in response to
-   this HTTP GET, or else return HTTP 405 Method Not Allowed, indicating that the server
-   does not offer an SSE stream at this endpoint.
-4. If the server initiates an SSE stream:
-   - The server **MAY** send JSON-RPC _requests_ and _notifications_ on the stream.
-   - These messages **SHOULD** be unrelated to any concurrently-running JSON-RPC
-     _request_ from the client.
-   - The server **MUST NOT** send a JSON-RPC _response_ on the stream **unless**
-     [resuming](#resumability-and-redelivery) a stream associated with a previous client
-     request.
-   - The server **MAY** close the SSE stream at any time.
-   - The client **MAY** close the SSE stream at any time.
+1. クライアントは、MCPエンドポイントに対してHTTP GETを発行できます。
+これによりSSEストリームが開かれ、クライアントがHTTP POSTでデータを送信することなく、サーバーがクライアントと通信できるようになります。
+2. クライアントは、サポートされるコンテンツタイプとして「text/event-stream」を指定した「Accept」ヘッダーを含める必要があります。
+3. サーバーは、このHTTP GETへのレスポンスとして「Content-Type: text/event-stream」を返すか、そうでない場合はHTTP 405 Method Not Allowed（サーバーがこのエンドポイントでSSEストリームを提供していないことを示す）を返す必要があります。
+4. サーバーがSSEストリームを開始した場合：
+  - サーバーは、ストリーム上でJSON-RPC _リクエスト_と_通知_を送信できます。
+  - これらのメッセージは、クライアントから同時に実行されているJSON-RPC _リクエスト_とは無関係である必要があります。
+  - サーバーは、以前のクライアントリクエストに関連付けられたストリームを [再開](#resumability-and-redelivery) しない限り、ストリームに対して JSON-RPC レスポンスを送信してはなりません。
+  - サーバーはいつでも SSE ストリームを閉じることができます。
+  - クライアントはいつでも SSE ストリームを閉じることができます。
 
-### Multiple Connections
+### 複数接続
 
-1. The client **MAY** remain connected to multiple SSE streams simultaneously.
-2. The server **MUST** send each of its JSON-RPC messages on only one of the connected
-   streams; that is, it **MUST NOT** broadcast the same message across multiple streams.
-   - The risk of message loss **MAY** be mitigated by making the stream
-     [resumable](#resumability-and-redelivery).
+1. クライアントは複数のSSEストリームに同時に接続したままでいてもよい（MAY）場合があります。
+2. サーバーは、接続されたストリームのうち1つにのみJSON-RPCメッセージを送信しなければなりません（MUST）。つまり、複数のストリームに同じメッセージをブロードキャストしてはなりません（MUST NOT）。
+- メッセージ損失のリスクは、ストリームを[再開可能](#resumability-and-redelivery)にすることで軽減できます（MAY）
 
-### Resumability and Redelivery
+### 再開と再配信
 
-To support resuming broken connections, and redelivering messages that might otherwise be
-lost:
+切断された接続の再開と、失われる可能性のあるメッセージの再配信をサポートするには、以下の手順に従います。
 
-1. Servers **MAY** attach an `id` field to their SSE events, as described in the
-   [SSE standard](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation).
-   - If present, the ID **MUST** be globally unique across all streams within that
-     [session](#session-management)—or all streams with that specific client, if session
-     management is not in use.
-2. If the client wishes to resume after a broken connection, it **SHOULD** issue an HTTP
-   GET to the MCP endpoint, and include the
-   [`Last-Event-ID`](https://html.spec.whatwg.org/multipage/server-sent-events.html#the-last-event-id-header)
-   header to indicate the last event ID it received.
-   - The server **MAY** use this header to replay messages that would have been sent
-     after the last event ID, _on the stream that was disconnected_, and to resume the
-     stream from that point.
-   - The server **MUST NOT** replay messages that would have been delivered on a
-     different stream.
+1. サーバーは、[SSE 標準](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation) で説明されているように、SSE イベントに `id` フィールドを付加できます。
+- ID が存在する場合、その ID は、その [セッション](#session-management) 内のすべてのストリーム、またはセッション管理が使用されていない場合は、その特定のクライアントのすべてのストリームにわたって、グローバルに一意である必要があります。
+2. クライアントが接続切断後に再開を希望する場合、MCPエンドポイントにHTTP GETを発行し、受信した最後のイベントIDを示す[`Last-Event-ID`](https://html.spec.whatwg.org/multipage/server-sent-events.html#the-last-event-id-header)ヘッダーを含めることが**推奨**されます。
+- サーバーは、このヘッダーを使用して、切断されたストリーム上の最後のイベントID以降に送信されるはずだったメッセージを再生し、その時点からストリームを再開することができます。
+- サーバーは、別のストリームで配信されるはずだったメッセージを再生してはなりません。
 
-In other words, these event IDs should be assigned by servers on a _per-stream_ basis, to
-act as a cursor within that particular stream.
+言い換えれば、これらのイベントIDは、特定のストリーム内でカーソルとして機能するように、サーバーによってストリームごとに割り当てられるべきです。
 
-### Session Management
+### セッション管理
 
-An MCP "session" consists of logically related interactions between a client and a
-server, beginning with the [initialization phase](/specification/2025-06-18/basic/lifecycle). To support
-servers which want to establish stateful sessions:
+MCP の「セッション」は、クライアントとサーバー間の論理的に関連する相互作用から構成され、[初期化フェーズ](/specification/2025-06-18/basic/lifecycle) から始まります。
+ステートフルセッションを確立するサーバーをサポートするには、次の操作を行います。
 
-1. A server using the Streamable HTTP transport **MAY** assign a session ID at
-   initialization time, by including it in an `Mcp-Session-Id` header on the HTTP
-   response containing the `InitializeResult`.
-   - The session ID **SHOULD** be globally unique and cryptographically secure (e.g., a
-     securely generated UUID, a JWT, or a cryptographic hash).
-   - The session ID **MUST** only contain visible ASCII characters (ranging from 0x21 to
-     0x7E).
-2. If an `Mcp-Session-Id` is returned by the server during initialization, clients using
-   the Streamable HTTP transport **MUST** include it in the `Mcp-Session-Id` header on
-   all of their subsequent HTTP requests.
-   - Servers that require a session ID **SHOULD** respond to requests without an
-     `Mcp-Session-Id` header (other than initialization) with HTTP 400 Bad Request.
-3. The server **MAY** terminate the session at any time, after which it **MUST** respond
-   to requests containing that session ID with HTTP 404 Not Found.
-4. When a client receives HTTP 404 in response to a request containing an
-   `Mcp-Session-Id`, it **MUST** start a new session by sending a new `InitializeRequest`
-   without a session ID attached.
-5. Clients that no longer need a particular session (e.g., because the user is leaving
-   the client application) **SHOULD** send an HTTP DELETE to the MCP endpoint with the
-   `Mcp-Session-Id` header, to explicitly terminate the session.
-   - The server **MAY** respond to this request with HTTP 405 Method Not Allowed,
-     indicating that the server does not allow clients to terminate sessions.
+1. ストリーミング可能な HTTP トランスポートを使用するサーバーは、初期化時にセッション ID を割り当てることができます。セッション ID は、`InitializeResult` を含む HTTP レスポンスの `Mcp-Session-Id` ヘッダーに含めることで割り当てることができます。
+- セッション ID は、グローバルに一意で、暗号学的に安全である必要があります (例: 安全に生成された UUID、JWT、または暗号ハッシュ)。
+- セッション ID には、表示可能な ASCII 文字 (0x21 から 0x7E の範囲) のみを含める必要があります。
+2. 初期化中にサーバーから `Mcp-Session-Id` が返された場合、ストリーミング可能な HTTP トランスポートを使用するクライアントは、以降のすべての HTTP リクエストの `Mcp-Session-Id` ヘッダーにその ID を含める必要があります (**MUST**)。
+- セッション ID を必要とするサーバーは、`Mcp-Session-Id` ヘッダーのないリクエスト (初期化時以外) に対して、HTTP 400 Bad Request で応答する必要があります (**SHOULD**)。
+3. サーバーはいつでもセッションを終了できます (**MAY**)。終了後は、そのセッション ID を含むリクエストに対して、HTTP 404 Not Found で応答する必要があります (**MUST**)。
+4. クライアントが `Mcp-Session-Id` を含むリクエストへの応答として HTTP 404 を受信した場合、セッション ID を添付せずに新しい `InitializeRequest` を送信して、新しいセッションを開始する必要があります (**MUST**)。
+5. 特定のセッションが不要になったクライアント（例：ユーザーがクライアントアプリケーションを離れる場合）は、セッションを明示的に終了するために、MCPエンドポイントに「Mcp-Session-Id」ヘッダーを指定したHTTP DELETEを送信することが**推奨**されます。
+- サーバーは、このリクエストに対してHTTP 405 Method Not Allowedで応答して、クライアントによるセッションの終了を許可しないことを示すことができます。
 
-### Sequence Diagram
+### シーケンス図
 
 ```mermaid
 sequenceDiagram
@@ -239,61 +180,40 @@ sequenceDiagram
 
 ```
 
-### Protocol Version Header
+### プロトコルバージョンヘッダー
 
-If using HTTP, the client **MUST** include the `MCP-Protocol-Version:
-<protocol-version>` HTTP header on all subsequent requests to the MCP
-server, allowing the MCP server to respond based on the MCP protocol version.
+HTTPを使用する場合、クライアントはMCPサーバーへの後続のすべてのリクエストに「MCP-Protocol-Version: <protocol-version>」HTTPヘッダーを含める必要があります（**MUST**）。これにより、MCPサーバーはMCPプロトコルバージョンに基づいて応答できます。
 
-For example: `MCP-Protocol-Version: 2025-06-18`
+例：`MCP-Protocol-Version: 2025-06-18`
 
-The protocol version sent by the client **SHOULD** be the one [negotiated during
-initialization](/specification/2025-06-18/basic/lifecycle#version-negotiation).
+クライアントが送信するプロトコルバージョンは、[初期化時にネゴシエートされたバージョン](/specification/2025-06-18/basic/lifecycle#version-negotiation)であるべきです（**SHOULD**）。
 
-For backwards compatibility, if the server does _not_ receive an `MCP-Protocol-Version`
-header, and has no other way to identify the version - for example, by relying on the
-protocol version negotiated during initialization - the server **SHOULD** assume protocol
-version `2025-03-26`.
+後方互換性のため、サーバーが`MCP-Protocol-Version`ヘッダーを受信せず、かつバージョンを識別する他の方法（例えば、初期化時にネゴシエートされたプロトコルバージョンに頼るなど）がない場合、サーバーはプロトコルバージョンを「2025-03-26」と想定すべきです（**SHOULD**）。
 
-If the server receives a request with an invalid or unsupported
-`MCP-Protocol-Version`, it **MUST** respond with `400 Bad Request`.
+サーバーが無効またはサポートされていない `MCP-Protocol-Version` を含むリクエストを受信した場合、 `400 Bad Request` で応答する必要があります。
 
-### Backwards Compatibility
+### 後方互換性
 
-Clients and servers can maintain backwards compatibility with the deprecated [HTTP+SSE
-transport](/specification/2024-11-05/basic/transports#http-with-sse) (from
-protocol version 2024-11-05) as follows:
+クライアントとサーバーは、非推奨となった[HTTP+SSEトランスポート](/specification/2024-11-05/basic/transports#http-with-sse)（プロトコルバージョン2024-11-05以降）との後方互換性を、以下のように維持できます。
 
-**Servers** wanting to support older clients should:
+**サーバー**は、古いクライアントをサポートする必要があります。
 
-- Continue to host both the SSE and POST endpoints of the old transport, alongside the
-  new "MCP endpoint" defined for the Streamable HTTP transport.
-  - It is also possible to combine the old POST endpoint and the new MCP endpoint, but
-    this may introduce unneeded complexity.
+- ストリーミング可能なHTTPトランスポート用に定義された新しい「MCPエンドポイント」に加えて、古いトランスポートのSSEエンドポイントとPOSTエンドポイントの両方を引き続きホストします。
+- 古いPOSTエンドポイントと新しいMCPエンドポイントを組み合わせることも可能ですが、不要な複雑さが生じる可能性があります。
 
-**Clients** wanting to support older servers should:
+**クライアント**は、古いサーバーをサポートする必要があります。
 
-1. Accept an MCP server URL from the user, which may point to either a server using the
-   old transport or the new transport.
-2. Attempt to POST an `InitializeRequest` to the server URL, with an `Accept` header as
-   defined above:
-   - If it succeeds, the client can assume this is a server supporting the new Streamable
-     HTTP transport.
-   - If it fails with an HTTP 4xx status code (e.g., 405 Method Not Allowed or 404 Not
-     Found):
-     - Issue a GET request to the server URL, expecting that this will open an SSE stream
-       and return an `endpoint` event as the first event.
-     - When the `endpoint` event arrives, the client can assume this is a server running
-       the old HTTP+SSE transport, and should use that transport for all subsequent
-       communication.
+1. ユーザーからMCPサーバーURLを受け取ります。このURLは、古いトランスポートを使用するサーバーまたは新しいトランスポートを使用するサーバーを指すことができます。
+2. 上記で定義した `Accept` ヘッダーを付けて、サーバー URL に `InitializeRequest` を POST 送信します。
+- 成功した場合、クライアントはこれが新しいストリーミング可能な HTTP トランスポートをサポートするサーバーであると想定できます。
+- HTTP 4xx ステータスコード（例：405 Method Not Allowed または 404 Not Found）で失敗した場合：
+- SSE ストリームが開かれ、最初のイベントとして `endpoint` イベントが返されることを想定して、サーバー URL に GET リクエストを発行します。
+- `endpoint` イベントが到着すると、クライアントはこれが古い HTTP+SSE トランスポートを実行しているサーバーであると想定し、以降のすべての通信でそのトランスポートを使用する必要があります。
 
-## Custom Transports
+## カスタムトランスポート
 
-Clients and servers **MAY** implement additional custom transport mechanisms to suit
-their specific needs. The protocol is transport-agnostic and can be implemented over any
-communication channel that supports bidirectional message exchange.
+クライアントとサーバーは、それぞれのニーズに合わせて追加のカスタムトランスポートメカニズムを実装できます。
+このプロトコルはトランスポートに依存せず、双方向メッセージ交換をサポートするあらゆる通信チャネルで実装できます。
 
-Implementers who choose to support custom transports **MUST** ensure they preserve the
-JSON-RPC message format and lifecycle requirements defined by MCP. Custom transports
-**SHOULD** document their specific connection establishment and message exchange patterns
-to aid interoperability.
+カスタムトランスポートをサポートすることを選択した実装者は、MCP で定義された JSON-RPC メッセージ形式とライフサイクル要件に準拠していることを保証しなければなりません。
+カスタムトランスポートは、相互運用性を高めるために、固有の接続確立とメッセージ交換パターンを文書化する必要があります。

@@ -6,26 +6,19 @@ title: Completion
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) provides a standardized way for servers to offer
-argument autocompletion suggestions for prompts and resource URIs. This enables rich,
-IDE-like experiences where users receive contextual suggestions while entering argument
-values.
+モデルコンテキストプロトコル（MCP）は、プロンプトやリソースURIの引数の自動補完候補をサーバーが提供できる標準化された方法を提供します。これにより、ユーザーが引数値を入力する際にコンテキストに応じた候補が表示される、IDEのようなリッチなエクスペリエンスが実現します。
 
-## User Interaction Model
+## ユーザーインタラクションモデル
 
-Completion in MCP is designed to support interactive user experiences similar to IDE code
-completion.
+MCP の補完機能は、IDE のコード補完と同様のインタラクティブなユーザーエクスペリエンスをサポートするように設計されています。
 
-For example, applications may show completion suggestions in a dropdown or popup menu as
-users type, with the ability to filter and select from available options.
+例えば、アプリケーションは、ユーザーが入力する際にドロップダウンメニューやポップアップメニューに補完候補を表示し、利用可能なオプションをフィルタリングして選択できるようにします。
 
-However, implementations are free to expose completion through any interface pattern that
-suits their needs&mdash;the protocol itself does not mandate any specific user
-interaction model.
+ただし、実装はニーズに合った任意のインターフェースパターンを通じて補完機能を自由に公開できます。プロトコル自体は特定のユーザーインタラクションモデルを必須としていません。
 
-## Capabilities
+## 機能
 
-Servers that support completions **MUST** declare the `completions` capability:
+補完をサポートするサーバーは、`completions` 機能を宣言する必要があります。
 
 ```json
 {
@@ -35,14 +28,13 @@ Servers that support completions **MUST** declare the `completions` capability:
 }
 ```
 
-## Protocol Messages
+## プロトコルメッセージ
 
-### Requesting Completions
+### 補完のリクエスト
 
-To get completion suggestions, clients send a `completion/complete` request specifying
-what is being completed through a reference type:
+補完候補を取得するために、クライアントは参照型を使用して補完対象を指定する `completion/complete` リクエストを送信します。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -62,7 +54,7 @@ what is being completed through a reference type:
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -78,9 +70,9 @@ what is being completed through a reference type:
 }
 ```
 
-For prompts or URI templates with multiple arguments, clients should include previous completions in the `context.arguments` object to provide context for subsequent requests.
+複数の引数を持つプロンプトまたは URI テンプレートの場合、クライアントは、後続のリクエストにコンテキストを提供するために、以前の補完結果を `context.arguments` オブジェクトに含める必要があります。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -105,7 +97,7 @@ For prompts or URI templates with multiple arguments, clients should include pre
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -121,24 +113,24 @@ For prompts or URI templates with multiple arguments, clients should include pre
 }
 ```
 
-### Reference Types
+### 参照タイプ
 
-The protocol supports two types of completion references:
+このプロトコルは、2種類の補完参照をサポートしています。
 
 | Type           | Description                 | Example                                             |
 | -------------- | --------------------------- | --------------------------------------------------- |
-| `ref/prompt`   | References a prompt by name | `{"type": "ref/prompt", "name": "code_review"}`     |
-| `ref/resource` | References a resource URI   | `{"type": "ref/resource", "uri": "file:///{path}"}` |
+| `ref/prompt`   | 名前でプロンプトを参照します | `{"type": "ref/prompt", "name": "code_review"}`     |
+| `ref/resource` | リソースURIを参照します   | `{"type": "ref/resource", "uri": "file:///{path}"}` |
 
-### Completion Results
+### 補完結果
 
-Servers return an array of completion values ranked by relevance, with:
+サーバーは、関連性に基づいてランク付けされた補完値の配列を返します。配列の内容は以下のとおりです。
 
-- Maximum 100 items per response
-- Optional total number of available matches
-- Boolean indicating if additional results exist
+- 応答ごとに最大100件
+- 利用可能な一致項目の総数（オプション）
+- 追加の結果が存在するかどうかを示すブール値
 
-## Message Flow
+## メッセージフロー
 
 ```mermaid
 sequenceDiagram
@@ -154,52 +146,53 @@ sequenceDiagram
     Server-->>Client: Refined suggestions
 ```
 
-## Data Types
+## データ型
 
 ### CompleteRequest
 
-- `ref`: A `PromptReference` or `ResourceReference`
-- `argument`: Object containing:
-  - `name`: Argument name
-  - `value`: Current value
-- `context`: Object containing:
-  - `arguments`: A mapping of already-resolved argument names to their values.
+- `ref`: `PromptReference` または `ResourceReference`
+- `argument`: 以下の要素を含むオブジェクト:
+  - `name`: 引数名
+  - `value`: 現在の値
+- `context`: 以下の要素を含むオブジェクト:
+  - `arguments`: 解決済みの引数名とその値のマッピング。
 
 ### CompleteResult
 
-- `completion`: Object containing:
-  - `values`: Array of suggestions (max 100)
-  - `total`: Optional total matches
-  - `hasMore`: Additional results flag
+- `completion`: 以下の内容を含むオブジェクト:
+  - `values`: 候補の配列 (最大 100 件)
+  - `total`: 一致した候補の総数 (オプション)
+  - `hasMore`: 追加結果フラグ
 
-## Error Handling
+## エラー処理
 
-Servers **SHOULD** return standard JSON-RPC errors for common failure cases:
+サーバーは、一般的な失敗ケースに対して標準のJSON-RPCエラーを返す必要があります（**SHOULD**）。
 
-- Method not found: `-32601` (Capability not supported)
-- Invalid prompt name: `-32602` (Invalid params)
-- Missing required arguments: `-32602` (Invalid params)
-- Internal errors: `-32603` (Internal error)
+- メソッドが見つからない: `-32601` (機能がサポートされていません)
+- プロンプト名が無効: `-32602` (無効なパラメータ)
+- 必須の引数がない: `-32602` (無効なパラメータ)
+- 内部エラー: `-32603` (内部エラー)
 
-## Implementation Considerations
+## 実装に関する考慮事項
 
-1. Servers **SHOULD**:
+1. サーバーは**すべき**:
 
-   - Return suggestions sorted by relevance
-   - Implement fuzzy matching where appropriate
-   - Rate limit completion requests
-   - Validate all inputs
+  - 関連性でソートされた候補を返す
+  - 適切な場合はあいまい一致を実装する
+  - 補完リクエストのレート制限を行う
+  - すべての入力を検証する
 
-2. Clients **SHOULD**:
-   - Debounce rapid completion requests
-   - Cache completion results where appropriate
-   - Handle missing or partial results gracefully
+2. クライアントは**すべき**:
 
-## Security
+  - 高速補完リクエストをデバウンスする
+  - 適切な場合は補完結果をキャッシュする
+  - 欠落または部分的な結果を適切に処理する
 
-Implementations **MUST**:
+## セキュリティ
 
-- Validate all completion inputs
-- Implement appropriate rate limiting
-- Control access to sensitive suggestions
-- Prevent completion-based information disclosure
+実装は**必須**です:
+
+- すべての補完入力を検証する
+- 適切なレート制限を実装する
+- 機密性の高い提案へのアクセスを制御する
+- 補完に基づく情報漏洩を防止する

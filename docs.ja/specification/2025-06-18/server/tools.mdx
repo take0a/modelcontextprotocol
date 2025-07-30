@@ -6,38 +6,31 @@ title: Tools
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) allows servers to expose tools that can be invoked by
-language models. Tools enable models to interact with external systems, such as querying
-databases, calling APIs, or performing computations. Each tool is uniquely identified by
-a name and includes metadata describing its schema.
+モデルコンテキストプロトコル（MCP）は、サーバーが言語モデルから呼び出せるツールを公開することを可能にします。
+ツールは、モデルが外部システムと対話することを可能にし、データベースへのクエリ、APIの呼び出し、計算の実行などを可能にします。
+各ツールは名前で一意に識別され、そのスキーマを記述するメタデータを含んでいます。
 
-## User Interaction Model
+## ユーザーインタラクションモデル
 
-Tools in MCP are designed to be **model-controlled**, meaning that the language model can
-discover and invoke tools automatically based on its contextual understanding and the
-user's prompts.
+MCP のツールは **モデル制御** されるように設計されています。つまり、言語モデルはコンテキストの理解とユーザーの指示に基づいてツールを自動的に検出し、呼び出すことができます。
 
-However, implementations are free to expose tools through any interface pattern that
-suits their needs&mdash;the protocol itself does not mandate any specific user
-interaction model.
+ただし、実装はニーズに合った任意のインターフェースパターンを通じてツールを公開できます。プロトコル自体は特定のユーザーインタラクションモデルを必須としていません。
 
 <Warning>
 
-For trust & safety and security, there **SHOULD** always
-be a human in the loop with the ability to deny tool invocations.
+信頼性、安全性、そしてセキュリティを確保するため、ツールの呼び出しを拒否できる人間が常に関与することが望ましいです。
 
-Applications **SHOULD**:
+アプリケーションは以下を行うべきです。
 
-- Provide UI that makes clear which tools are being exposed to the AI model
-- Insert clear visual indicators when tools are invoked
-- Present confirmation prompts to the user for operations, to ensure a human is in the
-  loop
+- AIモデルに公開されているツールを明確に示すUIを提供する
+- ツールが呼び出された際に、明確な視覚的インジケーターを表示する
+- 操作に関する確認プロンプトをユーザーに提示し、人間が関与していることを保証する
 
 </Warning>
 
-## Capabilities
+## 機能
 
-Servers that support tools **MUST** declare the `tools` capability:
+ツールをサポートするサーバーは、`tools` 機能を宣言する必要があります。
 
 ```json
 {
@@ -49,17 +42,15 @@ Servers that support tools **MUST** declare the `tools` capability:
 }
 ```
 
-`listChanged` indicates whether the server will emit notifications when the list of
-available tools changes.
+`listChanged` は、使用可能なツールのリストが変更されたときにサーバーが通知を送信するかどうかを示します。
 
-## Protocol Messages
+## プロトコルメッセージ
 
-### Listing Tools
+### ツールの一覧表示
 
-To discover available tools, clients send a `tools/list` request. This operation supports
-[pagination](/specification/2025-06-18/server/utilities/pagination).
+利用可能なツールを見つけるために、クライアントは `tools/list` リクエストを送信します。この操作は [ページネーション](/specification/2025-06-18/server/utilities/pagination) をサポートしています。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -72,7 +63,7 @@ To discover available tools, clients send a `tools/list` request. This operation
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -101,11 +92,11 @@ To discover available tools, clients send a `tools/list` request. This operation
 }
 ```
 
-### Calling Tools
+### ツールの呼び出し
 
-To invoke a tool, clients send a `tools/call` request:
+ツールを呼び出すには、クライアントは `tools/call` リクエストを送信します。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -121,7 +112,7 @@ To invoke a tool, clients send a `tools/call` request:
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -139,10 +130,9 @@ To invoke a tool, clients send a `tools/call` request:
 }
 ```
 
-### List Changed Notification
+### リスト変更通知
 
-When the list of available tools changes, servers that declared the `listChanged`
-capability **SHOULD** send a notification:
+利用可能なツールのリストが変更された場合、`listChanged` 機能を宣言したサーバーは**通知を送信すべき**です。
 
 ```json
 {
@@ -151,7 +141,7 @@ capability **SHOULD** send a notification:
 }
 ```
 
-## Message Flow
+## メッセージフロー
 
 ```mermaid
 sequenceDiagram
@@ -177,38 +167,34 @@ sequenceDiagram
     Server-->>Client: Updated tools
 ```
 
-## Data Types
+## データ型
 
-### Tool
+### ツール
 
-A tool definition includes:
+ツール定義には以下が含まれます。
 
-- `name`: Unique identifier for the tool
-- `title`: Optional human-readable name of the tool for display purposes.
-- `description`: Human-readable description of functionality
-- `inputSchema`: JSON Schema defining expected parameters
-- `outputSchema`: Optional JSON Schema defining expected output structure
-- `annotations`: optional properties describing tool behavior
+- `name`: ツールの一意の識別子
+- `title`: 表示用に人間が判読できるツール名（オプション）
+- `description`: 人間が判読できる機能の説明
+- `inputSchema`: 想定されるパラメータを定義するJSONスキーマ
+- `outputSchema`: 想定される出力構造を定義するJSONスキーマ（オプション）
+- `annotations`: ツールの動作を記述するプロパティ（オプション）
 
 <Warning>
 
-For trust & safety and security, clients **MUST** consider
-tool annotations to be untrusted unless they come from trusted servers.
+信頼性と安全性、セキュリティを確保するため、クライアントは、信頼できるサーバーからのものでない限り、ツール注釈を信頼できないものと見なす必要があります。
 
 </Warning>
 
-### Tool Result
+### ツールの結果
 
-Tool results may contain [**structured**](#structured-content) or **unstructured** content.
+ツールの結果には、[**構造化**](#structured-content) または **非構造化** コンテンツが含まれる場合があります。
 
-**Unstructured** content is returned in the `content` field of a result, and can contain multiple content items of different types:
+**非構造化** コンテンツは結果の `content` フィールドに返され、異なるタイプの複数のコンテンツ項目が含まれる場合があります。
 
 <Note>
-  All content types (text, image, audio, resource links, and embedded resources)
-  support optional
-  [annotations](/specification/2025-06-18/server/resources#annotations) that
-  provide metadata about audience, priority, and modification times. This is the
-  same annotation format used by resources and prompts.
+  すべてのコンテンツタイプ（テキスト、画像、音声、リソースリンク、埋め込みリソース）は、対象ユーザー、優先度、変更時刻に関するメタデータを提供するオプションの[アノテーション](/specification/2025-06-18/server/resources#annotations)をサポートしています。
+  これは、リソースやプロンプトで使用されるアノテーション形式と同じです。
 </Note>
 
 #### Text Content
@@ -235,7 +221,7 @@ Tool results may contain [**structured**](#structured-content) or **unstructured
 }
 ```
 
-This example demonstrates the use of an optional Annotation.
+この例では、オプションの注釈の使用方法を示します。
 
 #### Audio Content
 
@@ -247,10 +233,10 @@ This example demonstrates the use of an optional Annotation.
 }
 ```
 
-#### Resource Links
+#### リソースリンク
 
-A tool **MAY** return links to [Resources](/specification/2025-06-18/server/resources), to provide additional context
-or data. In this case, the tool will return a URI that can be subscribed to or fetched by the client:
+ツールは、追加のコンテキストやデータを提供するために、[リソース](/specification/2025-06-18/server/resources)へのリンクを返すことが**可能です**。
+この場合、ツールはクライアントがサブスクライブまたは取得できるURIを返します。
 
 ```json
 {
@@ -266,17 +252,16 @@ or data. In this case, the tool will return a URI that can be subscribed to or f
 }
 ```
 
-Resource links support the same [Resource annotations](/specification/2025-06-18/server/resources#annotations) as regular resources to help clients understand how to use them.
+リソース リンクは、クライアントがリソースの使用方法を理解できるように、通常のリソースと同じ [リソース アノテーション](/specification/2025-06-18/server/resources#annotations) をサポートしています。
 
 <Info>
-  Resource links returned by tools are not guaranteed to appear in the results
-  of a `resources/list` request.
+  ツールによって返されるリソース リンクが `resources/list` リクエストの結果に表示されることは保証されません。
 </Info>
 
-#### Embedded Resources
+#### 埋め込みリソース
 
-[Resources](/specification/2025-06-18/server/resources) **MAY** be embedded to provide additional context
-or data using a suitable [URI scheme](./resources#common-uri-schemes). Servers that use embedded resources **SHOULD** implement the `resources` capability:
+[リソース](/specification/2025-06-18/server/resources) は、適切な [URI スキーム](./resources#common-uri-schemes) を使用して、追加のコンテキストやデータを提供するために埋め込まれることが**可能です**。
+埋め込みリソースを使用するサーバーは、`resources` 機能を実装する必要があります**。
 
 ```json
 {
@@ -295,23 +280,23 @@ or data using a suitable [URI scheme](./resources#common-uri-schemes). Servers t
 }
 ```
 
-Embedded resources support the same [Resource annotations](/specification/2025-06-18/server/resources#annotations) as regular resources to help clients understand how to use them.
+埋め込みリソースは、クライアントがリソースの使用方法を理解できるように、通常のリソースと同じ[リソース アノテーション](/specification/2025-06-18/server/resources#annotations)をサポートしています。
 
-#### Structured Content
+#### 構造化コンテンツ
 
-**Structured** content is returned as a JSON object in the `structuredContent` field of a result.
+**構造化**コンテンツは、結果の`structuredContent`フィールドにJSONオブジェクトとして返されます。
 
-For backwards compatibility, a tool that returns structured content SHOULD also return the serialized JSON in a TextContent block.
+下位互換性のため、構造化コンテンツを返すツールは、TextContentブロックにシリアル化されたJSONも返す必要があります。
 
-#### Output Schema
+#### 出力スキーマ
 
-Tools may also provide an output schema for validation of structured results.
-If an output schema is provided:
+ツールは、構造化された結果の検証用に出力スキーマを提供する場合もあります。
+出力スキーマが提供される場合：
 
-- Servers **MUST** provide structured results that conform to this schema.
-- Clients **SHOULD** validate structured results against this schema.
+- サーバーは、このスキーマに準拠した構造化された結果を提供しなければなりません（MUST）。
+- クライアントは、このスキーマに基づいて構造化された結果を検証すべきです（SHOULD）。
 
-Example tool with output schema:
+出力スキーマを含むツールの例：
 
 ```json
 {
@@ -349,7 +334,7 @@ Example tool with output schema:
 }
 ```
 
-Example valid response for this tool:
+このツールの有効な応答の例:
 
 ```json
 {
@@ -371,29 +356,29 @@ Example valid response for this tool:
 }
 ```
 
-Providing an output schema helps clients and LLMs understand and properly handle structured tool outputs by:
+出力スキーマを提供することで、クライアントとLLMは構造化されたツール出力を理解し、適切に処理できるようになります。具体的には、以下のようになります。
 
-- Enabling strict schema validation of responses
-- Providing type information for better integration with programming languages
-- Guiding clients and LLMs to properly parse and utilize the returned data
-- Supporting better documentation and developer experience
+- レスポンスの厳密なスキーマ検証が可能
+- プログラミング言語との統合性を高めるための型情報の提供
+- クライアントとLLMが返されたデータを適切に解析・活用できるように支援
+- ドキュメントと開発者エクスペリエンスの向上をサポート
 
-## Error Handling
+## エラー処理
 
-Tools use two error reporting mechanisms:
+ツールは2つのエラー報告メカニズムを使用します。
 
-1. **Protocol Errors**: Standard JSON-RPC errors for issues like:
+1. **プロトコルエラー**: 次のような問題に関する標準JSON-RPCエラー
 
-   - Unknown tools
-   - Invalid arguments
-   - Server errors
+- 不明なツール
+- 無効な引数
+- サーバーエラー
 
-2. **Tool Execution Errors**: Reported in tool results with `isError: true`:
-   - API failures
-   - Invalid input data
-   - Business logic errors
+2. **ツール実行エラー**: ツールの結果に `isError: true` で報告されます。
+- APIエラー
+- 無効な入力データ
+- ビジネスロジックエラー
 
-Example protocol error:
+プロトコルエラーの例:
 
 ```json
 {
@@ -406,7 +391,7 @@ Example protocol error:
 }
 ```
 
-Example tool execution error:
+ツール実行エラーの例:
 
 ```json
 {
@@ -424,19 +409,19 @@ Example tool execution error:
 }
 ```
 
-## Security Considerations
+## セキュリティに関する考慮事項
 
-1. Servers **MUST**:
+1. サーバーは**必須**です。
 
-   - Validate all tool inputs
-   - Implement proper access controls
-   - Rate limit tool invocations
-   - Sanitize tool outputs
+  - すべてのツール入力を検証する
+  - 適切なアクセス制御を実装する
+  - ツールの呼び出しレートを制限する
+  - ツールの出力をサニタイズする
 
-2. Clients **SHOULD**:
-   - Prompt for user confirmation on sensitive operations
-   - Show tool inputs to the user before calling the server, to avoid malicious or
-     accidental data exfiltration
-   - Validate tool results before passing to LLM
-   - Implement timeouts for tool calls
-   - Log tool usage for audit purposes
+2. クライアントは**推奨**です。
+
+  - 機密性の高い操作についてはユーザーに確認を求める
+  - 悪意のある、または偶発的なデータ漏洩を防ぐため、サーバーを呼び出す前にツール入力をユーザーに表示する
+  - LLMに渡す前にツールの結果を検証する
+  - ツール呼び出しにタイムアウトを実装する
+  - 監査のためにツールの使用状況を記録する

@@ -6,31 +6,25 @@ title: Prompts
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) provides a standardized way for servers to expose prompt
-templates to clients. Prompts allow servers to provide structured messages and
-instructions for interacting with language models. Clients can discover available
-prompts, retrieve their contents, and provide arguments to customize them.
+モデルコンテキストプロトコル（MCP）は、サーバーがクライアントにプロンプトテンプレートを公開するための標準化された方法を提供します。
+プロンプトにより、サーバーは言語モデルと対話するための構造化されたメッセージと指示を提供できます。
+クライアントは利用可能なプロンプトを検出し、その内容を取得し、引数を指定してカスタマイズできます。
 
-## User Interaction Model
+## ユーザーインタラクションモデル
 
-Prompts are designed to be **user-controlled**, meaning they are exposed from servers to
-clients with the intention of the user being able to explicitly select them for use.
+プロンプトは**ユーザー制御**されるように設計されています。つまり、ユーザーが明示的に選択して使用できるように、サーバーからクライアントに公開されます。
 
-Typically, prompts would be triggered through user-initiated commands in the user
-interface, which allows users to naturally discover and invoke available prompts.
+通常、プロンプトはユーザーインターフェース上でユーザーが開始するコマンドによってトリガーされます。これにより、ユーザーは利用可能なプロンプトを自然に見つけて呼び出すことができます。
 
-For example, as slash commands:
+例えば、スラッシュコマンドとして：
 
-![Example of prompt exposed as slash command](/specification/2025-06-18/server/slash-command.png)
+![スラッシュコマンドとして公開されるプロンプトの例](/specification/2025-06-18/server/slash-command.png)
 
-However, implementors are free to expose prompts through any interface pattern that suits
-their needs&mdash;the protocol itself does not mandate any specific user interaction
-model.
+ただし、実装者はニーズに合った任意のインターフェースパターンを通じてプロンプトを公開できます。プロトコル自体は特定のユーザーインタラクションモデルを必須としていません。
 
-## Capabilities
+## 機能
 
-Servers that support prompts **MUST** declare the `prompts` capability during
-[initialization](/specification/2025-06-18/basic/lifecycle#initialization):
+プロンプトをサポートするサーバーは、[初期化](/specification/2025-06-18/basic/lifecycle#initialization) 中に `prompts` 機能を宣言する必要があります。**MUST**
 
 ```json
 {
@@ -42,17 +36,15 @@ Servers that support prompts **MUST** declare the `prompts` capability during
 }
 ```
 
-`listChanged` indicates whether the server will emit notifications when the list of
-available prompts changes.
+`listChanged` は、使用可能なプロンプトのリストが変更されたときにサーバーが通知を発行するかどうかを示します。
 
-## Protocol Messages
+## プロトコルメッセージ
 
-### Listing Prompts
+### プロンプトの一覧表示
 
-To retrieve available prompts, clients send a `prompts/list` request. This operation
-supports [pagination](/specification/2025-06-18/server/utilities/pagination).
+利用可能なプロンプトを取得するには、クライアントは `prompts/list` リクエストを送信します。この操作は [ページネーション](/specification/2025-06-18/server/utilities/pagination) をサポートしています。
 
-**Request:**
+**リクエスト：**
 
 ```json
 {
@@ -65,7 +57,7 @@ supports [pagination](/specification/2025-06-18/server/utilities/pagination).
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -91,12 +83,11 @@ supports [pagination](/specification/2025-06-18/server/utilities/pagination).
 }
 ```
 
-### Getting a Prompt
+### プロンプトの取得
 
-To retrieve a specific prompt, clients send a `prompts/get` request. Arguments may be
-auto-completed through [the completion API](/specification/2025-06-18/server/utilities/completion).
+特定のプロンプトを取得するには、クライアントは `prompts/get` リクエストを送信します。引数は [補完 API](/specification/2025-06-18/server/utilities/completion) を通じて自動補完される場合があります。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -112,7 +103,7 @@ auto-completed through [the completion API](/specification/2025-06-18/server/uti
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -133,10 +124,9 @@ auto-completed through [the completion API](/specification/2025-06-18/server/uti
 }
 ```
 
-### List Changed Notification
+### リスト変更通知
 
-When the list of available prompts changes, servers that declared the `listChanged`
-capability **SHOULD** send a notification:
+利用可能なプロンプトのリストが変更された場合、`listChanged` 機能を宣言したサーバーは**通知を送信すべき**です。
 
 ```json
 {
@@ -145,7 +135,7 @@ capability **SHOULD** send a notification:
 }
 ```
 
-## Message Flow
+## メッセージフロー
 
 ```mermaid
 sequenceDiagram
@@ -168,33 +158,31 @@ sequenceDiagram
     end
 ```
 
-## Data Types
+## データ型
 
-### Prompt
+### プロンプト
 
-A prompt definition includes:
+プロンプト定義には以下が含まれます。
 
-- `name`: Unique identifier for the prompt
-- `title`: Optional human-readable name of the prompt for display purposes.
-- `description`: Optional human-readable description
-- `arguments`: Optional list of arguments for customization
+- `name`: プロンプトの一意の識別子
+- `title`: 表示用に人間が判読できるプロンプト名（オプション）
+- `description`: 人間が判読できる説明（オプション）
+- `arguments`: カスタマイズ用の引数リスト（オプション）n
 
-### PromptMessage
+### プロンプトメッセージ
 
-Messages in a prompt can contain:
+プロンプト内のメッセージには以下を含めることができます。
 
-- `role`: Either "user" or "assistant" to indicate the speaker
-- `content`: One of the following content types:
+- `role`: 話者を示す「user」または「assistant」のいずれか
+- `content`: 以下のいずれかのコンテンツタイプ
 
 <Note>
-  All content types in prompt messages support optional
-  [annotations](/specification/2025-06-18/server/resources#annotations) for
-  metadata about audience, priority, and modification times.
+  プロンプトメッセージ内のすべてのコンテンツタイプは、対象者、優先度、変更時刻に関するメタデータについてオプションの[アノテーション](/specification/2025-06-18/server/resources#annotations)をサポートしています。
 </Note>
 
 #### Text Content
 
-Text content represents plain text messages:
+テキスト コンテンツはプレーン テキスト メッセージを表します。
 
 ```json
 {
@@ -203,11 +191,11 @@ Text content represents plain text messages:
 }
 ```
 
-This is the most common content type used for natural language interactions.
+これは、自然言語によるやりとりに使用される最も一般的なコンテンツ タイプです。
 
 #### Image Content
 
-Image content allows including visual information in messages:
+画像コンテンツを使用すると、メッセージに視覚的な情報を含めることができます。
 
 ```json
 {
@@ -217,12 +205,12 @@ Image content allows including visual information in messages:
 }
 ```
 
-The image data **MUST** be base64-encoded and include a valid MIME type. This enables
-multi-modal interactions where visual context is important.
+画像データは**必ず**Base64エンコードされ、有効なMIMEタイプが含まれている必要があります。
+これにより、視覚的なコンテキストが重要なマルチモーダルインタラクションが可能になります。
 
 #### Audio Content
 
-Audio content allows including audio information in messages:
+オーディオ コンテンツを使用すると、メッセージにオーディオ情報を含めることができます。
 
 ```json
 {
@@ -232,12 +220,12 @@ Audio content allows including audio information in messages:
 }
 ```
 
-The audio data MUST be base64-encoded and include a valid MIME type. This enables
-multi-modal interactions where audio context is important.
+音声データはBase64でエンコードされ、有効なMIMEタイプが含まれている必要があります。
+これにより、音声コンテキストが重要なマルチモーダルインタラクションが可能になります。
 
-#### Embedded Resources
+#### 埋め込みリソース
 
-Embedded resources allow referencing server-side resources directly in messages:
+埋め込みリソースを使用すると、メッセージ内でサーバー側のリソースを直接参照できます。
 
 ```json
 {
@@ -252,31 +240,28 @@ Embedded resources allow referencing server-side resources directly in messages:
 }
 ```
 
-Resources can contain either text or binary (blob) data and **MUST** include:
+リソースにはテキストまたはバイナリ（BLOB）データを含めることができ、以下の要素を**必ず**含める必要があります。
 
-- A valid resource URI
-- The appropriate MIME type
-- Either text content or base64-encoded blob data
+- 有効なリソースURI
+- 適切なMIMEタイプ
+- テキストコンテンツまたはBase64エンコードされたBLOBデータ
 
-Embedded resources enable prompts to seamlessly incorporate server-managed content like
-documentation, code samples, or other reference materials directly into the conversation
-flow.
+埋め込みリソースを使用すると、ドキュメント、コードサンプル、その他の参考資料など、サーバー管理コンテンツをプロンプトの会話フローにシームレスに組み込むことができます。
 
-## Error Handling
+## エラー処理
 
-Servers **SHOULD** return standard JSON-RPC errors for common failure cases:
+サーバーは、一般的な失敗ケースに対して標準のJSON-RPCエラーを返す必要があります（**SHOULD**）。
 
-- Invalid prompt name: `-32602` (Invalid params)
-- Missing required arguments: `-32602` (Invalid params)
-- Internal errors: `-32603` (Internal error)
+- プロンプト名が無効: `-32602` (無効なパラメータ)
+- 必須の引数が不足: `-32602` (無効なパラメータ)
+- 内部エラー: `-32603` (内部エラー)
 
-## Implementation Considerations
+## 実装上の考慮事項
 
-1. Servers **SHOULD** validate prompt arguments before processing
-2. Clients **SHOULD** handle pagination for large prompt lists
-3. Both parties **SHOULD** respect capability negotiation
+1. サーバーは、処理前にプロンプト引数を検証するべきである（SHOULD）
+2. クライアントは、大規模なプロンプトリストのページネーションを処理するべきである（SHOULD）
+3. 双方は、機能ネゴシエーションを尊重すべきである（SHOULD）
 
-## Security
+## セキュリティ
 
-Implementations **MUST** carefully validate all prompt inputs and outputs to prevent
-injection attacks or unauthorized access to resources.
+実装では、インジェクション攻撃やリソースへの不正アクセスを防ぐため、すべてのプロンプトの入力と出力を慎重に検証する必要があります。

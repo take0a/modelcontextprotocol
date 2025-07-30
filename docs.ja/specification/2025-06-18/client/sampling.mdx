@@ -6,39 +6,31 @@ title: Sampling
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) provides a standardized way for servers to request LLM
-sampling ("completions" or "generations") from language models via clients. This flow
-allows clients to maintain control over model access, selection, and permissions while
-enabling servers to leverage AI capabilities&mdash;with no server API keys necessary.
-Servers can request text, audio, or image-based interactions and optionally include
-context from MCP servers in their prompts.
+モデルコンテキストプロトコル（MCP）は、サーバーがクライアントを介して言語モデルにLLMサンプリング（「補完」または「生成」）を要求するための標準化された方法を提供します。
+このフローにより、クライアントはモデルへのアクセス、選択、および権限を制御しながら、サーバーがAI機能を活用できるようになります。サーバーAPIキーは必要ありません。
+サーバーはテキスト、音声、または画像ベースのインタラクションを要求でき、オプションでMCPサーバーからのコンテキストをプロンプトに含めることができます。
 
-## User Interaction Model
+## ユーザーインタラクションモデル
 
-Sampling in MCP allows servers to implement agentic behaviors, by enabling LLM calls to
-occur _nested_ inside other MCP server features.
+MCP のサンプリングにより、LLM 呼び出しを他の MCP サーバー機能内にネストして実行できるようになり、サーバーはエージェント的な動作を実装できます。
 
-Implementations are free to expose sampling through any interface pattern that suits
-their needs&mdash;the protocol itself does not mandate any specific user interaction
-model.
+実装は、ニーズに合った任意のインターフェースパターンを通じてサンプリングを自由に公開できます。プロトコル自体は特定のユーザーインタラクションモデルを必須としていません。
 
 <Warning>
 
-For trust & safety and security, there **SHOULD** always
-be a human in the loop with the ability to deny sampling requests.
+信頼性、安全性、セキュリティを確保するため、サンプリングリクエストを拒否できる人間が常に関与するべきです。
 
-Applications **SHOULD**:
+アプリケーションは以下を実施すべきです。
 
-- Provide UI that makes it easy and intuitive to review sampling requests
-- Allow users to view and edit prompts before sending
-- Present generated responses for review before delivery
+- サンプリングリクエストを簡単かつ直感的に確認できるUIを提供する
+- ユーザーが送信前にプロンプトを表示・編集できるようにする
+- 生成されたレスポンスを配信前に確認用に提示する
 
 </Warning>
 
-## Capabilities
+## 機能
 
-Clients that support sampling **MUST** declare the `sampling` capability during
-[initialization](/specification/2025-06-18/basic/lifecycle#initialization):
+サンプリングをサポートするクライアントは、[初期化](/specification/2025-06-18/basic/lifecycle#initialization) 中に `sampling` 機能を宣言する必要があります。
 
 ```json
 {
@@ -48,13 +40,13 @@ Clients that support sampling **MUST** declare the `sampling` capability during
 }
 ```
 
-## Protocol Messages
+## プロトコルメッセージ
 
-### Creating Messages
+### メッセージの作成
 
-To request a language model generation, servers send a `sampling/createMessage` request:
+言語モデルの生成を要求するために、サーバーは `sampling/createMessage` リクエストを送信します。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -86,7 +78,7 @@ To request a language model generation, servers send a `sampling/createMessage` 
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -104,7 +96,7 @@ To request a language model generation, servers send a `sampling/createMessage` 
 }
 ```
 
-## Message Flow
+## メッセージフロー
 
 ```mermaid
 sequenceDiagram
@@ -132,11 +124,11 @@ sequenceDiagram
     Client-->>Server: Return approved response
 ```
 
-## Data Types
+## データ型
 
-### Messages
+### メッセージ
 
-Sampling messages can contain:
+サンプリングメッセージには以下が含まれます。
 
 #### Text Content
 
@@ -167,36 +159,32 @@ Sampling messages can contain:
 }
 ```
 
-### Model Preferences
+### モデル設定
 
-Model selection in MCP requires careful abstraction since servers and clients may use
-different AI providers with distinct model offerings. A server cannot simply request a
-specific model by name since the client may not have access to that exact model or may
-prefer to use a different provider's equivalent model.
+MCPにおけるモデル選択には、サーバーとクライアントが異なるAIプロバイダーを利用し、それぞれ異なるモデルを提供している可能性があるため、慎重な抽象化が必要です。
 
-To solve this, MCP implements a preference system that combines abstract capability
-priorities with optional model hints:
+サーバーは、クライアントが特定のモデルにアクセスできない場合や、別のプロバイダーの同等のモデルを使用することを好む場合があるため、単に名前で特定のモデルを要求することはできません。
 
-#### Capability Priorities
+この問題を解決するために、MCPは、抽象的な機能の優先順位とオプションのモデルヒントを組み合わせた設定システムを実装しています。
 
-Servers express their needs through three normalized priority values (0-1):
+#### 機能の優先度
 
-- `costPriority`: How important is minimizing costs? Higher values prefer cheaper models.
-- `speedPriority`: How important is low latency? Higher values prefer faster models.
-- `intelligencePriority`: How important are advanced capabilities? Higher values prefer
-  more capable models.
+サーバーは、3つの正規化された優先度値（0～1）でニーズを表します。
 
-#### Model Hints
+- `costPriority`: コストの最小化はどの程度重要ですか？値が高いほど、より安価なモデルが優先されます。
+- `speedPriority`: 低レイテンシはどの程度重要ですか？値が高いほど、より高速なモデルが優先されます。
+- `intelligencePriority`: 高度な機能はどの程度重要ですか？値が高いほど、より高性能なモデルが優先されます。
 
-While priorities help select models based on characteristics, `hints` allow servers to
-suggest specific models or model families:
+#### モデルヒント
 
-- Hints are treated as substrings that can match model names flexibly
-- Multiple hints are evaluated in order of preference
-- Clients **MAY** map hints to equivalent models from different providers
-- Hints are advisory&mdash;clients make final model selection
+優先順位は特性に基づいてモデルを選択するのに役立ちますが、「ヒント」はサーバーが特定のモデルまたはモデルファミリーを提案できるようにします。
 
-For example:
+- ヒントは、モデル名に柔軟に一致できる部分文字列として扱われます。
+- 複数のヒントは優先順位に従って評価されます。
+- クライアントは、ヒントを異なるプロバイダーの同等のモデルにマッピングできます。
+- ヒントは参考用であり、最終的なモデル選択はクライアントが行います。
+
+例えば：
 
 ```json
 {
@@ -210,15 +198,14 @@ For example:
 }
 ```
 
-The client processes these preferences to select an appropriate model from its available
-options. For instance, if the client doesn't have access to Claude models but has Gemini,
-it might map the sonnet hint to `gemini-1.5-pro` based on similar capabilities.
+クライアントはこれらの設定を処理して、利用可能なオプションから適切なモデルを選択します。
+例えば、クライアントがClaudeモデルにアクセスできないがGeminiを持っている場合、同様の機能に基づいてsonnetヒントを`gemini-1.5-pro`にマッピングする可能性があります。
 
-## Error Handling
+## エラー処理
 
-Clients **SHOULD** return errors for common failure cases:
+クライアントは、一般的な失敗事例に対してエラーを返す必要があります（**SHOULD**）。
 
-Example error:
+エラー例：
 
 ```json
 {
@@ -231,10 +218,10 @@ Example error:
 }
 ```
 
-## Security Considerations
+## セキュリティに関する考慮事項
 
-1. Clients **SHOULD** implement user approval controls
-2. Both parties **SHOULD** validate message content
-3. Clients **SHOULD** respect model preference hints
-4. Clients **SHOULD** implement rate limiting
-5. Both parties **MUST** handle sensitive data appropriately
+1. クライアントはユーザー承認制御を実装するべきである
+2. 双方はメッセージ内容を検証するべきである
+3. クライアントはモデル設定のヒントを尊重するべきである
+4. クライアントはレート制限を実装するべきである
+5. 双方は機密データを適切に処理しなければならない

@@ -6,19 +6,16 @@ title: Logging
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) provides a standardized way for servers to send
-structured log messages to clients. Clients can control logging verbosity by setting
-minimum log levels, with servers sending notifications containing severity levels,
-optional logger names, and arbitrary JSON-serializable data.
+モデルコンテキストプロトコル（MCP）は、サーバーがクライアントに構造化されたログメッセージを送信するための標準化された方法を提供します。
+クライアントは最小ログレベルを設定することでログの詳細度を制御でき、サーバーは重大度レベル、オプションのロガー名、および任意のJSONシリアル化可能なデータを含む通知を送信します。
 
-## User Interaction Model
+## ユーザーインタラクションモデル
 
-Implementations are free to expose logging through any interface pattern that suits their
-needs&mdash;the protocol itself does not mandate any specific user interaction model.
+実装は、ニーズに合った任意のインターフェースパターンを通じてログ記録を自由に公開できます。プロトコル自体は、特定のユーザーインタラクションモデルを必須としていません。
 
-## Capabilities
+## 機能
 
-Servers that emit log message notifications **MUST** declare the `logging` capability:
+ログメッセージ通知を発行するサーバーは、`logging` 機能を宣言する必要があります。
 
 ```json
 {
@@ -28,29 +25,28 @@ Servers that emit log message notifications **MUST** declare the `logging` capab
 }
 ```
 
-## Log Levels
+## ログレベル
 
-The protocol follows the standard syslog severity levels specified in
-[RFC 5424](https://datatracker.ietf.org/doc/html/rfc5424#section-6.2.1):
+このプロトコルは、[RFC 5424](https://datatracker.ietf.org/doc/html/rfc5424#section-6.2.1) で規定されている標準的な Syslog の重大度レベルに準拠しています。
 
-| Level     | Description                      | Example Use Case           |
+| レベル | 説明 | 使用例 |
 | --------- | -------------------------------- | -------------------------- |
-| debug     | Detailed debugging information   | Function entry/exit points |
-| info      | General informational messages   | Operation progress updates |
-| notice    | Normal but significant events    | Configuration changes      |
-| warning   | Warning conditions               | Deprecated feature usage   |
-| error     | Error conditions                 | Operation failures         |
-| critical  | Critical conditions              | System component failures  |
-| alert     | Action must be taken immediately | Data corruption detected   |
-| emergency | System is unusable               | Complete system failure    |
+| debug | 詳細なデバッグ情報 | 関数のエントリ/終了ポイント |
+| info | 一般的な情報メッセージ | 操作の進行状況の更新 |
+| notification | 正常だが重要なイベント | 構成の変更 |
+| warning | 警告状態 | 非推奨の機能の使用 |
+| error | エラー状態 | 操作の失敗 |
+| critical | 重大な状態 | システム コンポーネントの障害 |
+| alert | すぐに対処する必要があります | データ破損が検出されました |
+| emergency | システムが使用できません | 完全なシステム障害 |
 
-## Protocol Messages
+## プロトコルメッセージ
 
-### Setting Log Level
+### ログレベルの設定
 
-To configure the minimum log level, clients **MAY** send a `logging/setLevel` request:
+最小ログレベルを設定するために、クライアントは `logging/setLevel` リクエストを送信できます。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -63,9 +59,9 @@ To configure the minimum log level, clients **MAY** send a `logging/setLevel` re
 }
 ```
 
-### Log Message Notifications
+### ログメッセージ通知
 
-Servers send log messages using `notifications/message` notifications:
+サーバーは `notifications/message` 通知を使用してログメッセージを送信します。
 
 ```json
 {
@@ -85,7 +81,7 @@ Servers send log messages using `notifications/message` notifications:
 }
 ```
 
-## Message Flow
+## メッセージフロー
 
 ```mermaid
 sequenceDiagram
@@ -107,38 +103,40 @@ sequenceDiagram
     Note over Server: Only sends error level<br/>and above
 ```
 
-## Error Handling
+## エラー処理
 
-Servers **SHOULD** return standard JSON-RPC errors for common failure cases:
+サーバーは、一般的な失敗ケースに対して標準のJSON-RPCエラーを返す必要があります（**SHOULD**）。
 
-- Invalid log level: `-32602` (Invalid params)
-- Configuration errors: `-32603` (Internal error)
+- 無効なログレベル: `-32602` (無効なパラメータ)
+- 設定エラー: `-32603` (内部エラー)
 
-## Implementation Considerations
+## 実装に関する考慮事項
 
-1. Servers **SHOULD**:
+1. サーバーは**すべき**です:
 
-   - Rate limit log messages
-   - Include relevant context in data field
-   - Use consistent logger names
-   - Remove sensitive information
+  - ログメッセージのレート制限
+  - データフィールドに関連コンテキストを含める
+  - 一貫したロガー名を使用する
+  - 機密情報を削除する
 
-2. Clients **MAY**:
-   - Present log messages in the UI
-   - Implement log filtering/search
-   - Display severity visually
-   - Persist log messages
+2. クライアントは**しても良い**です:
 
-## Security
+  - UI にログメッセージを表示する
+  - ログのフィルタリング/検索を実装する
+  - 重大度を視覚的に表示する
+  - ログメッセージを永続化する
 
-1. Log messages **MUST NOT** contain:
+## セキュリティ
 
-   - Credentials or secrets
-   - Personal identifying information
-   - Internal system details that could aid attacks
+1. ログメッセージには**含めてはなりません**:
 
-2. Implementations **SHOULD**:
-   - Rate limit messages
-   - Validate all data fields
-   - Control log access
-   - Monitor for sensitive content
+  - 認証情報またはシークレット
+  - 個人を特定できる情報
+  - 攻撃を助長する可能性のある内部システムの詳細
+
+2. 実装は**すべき**です:
+
+  - メッセージのレート制限
+  - すべてのデータフィールドを検証する
+  - ログアクセスを制御する
+  - 機密コンテンツを監視する

@@ -6,32 +6,27 @@ title: Resources
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) provides a standardized way for servers to expose
-resources to clients. Resources allow servers to share data that provides context to
-language models, such as files, database schemas, or application-specific information.
-Each resource is uniquely identified by a
-[URI](https://datatracker.ietf.org/doc/html/rfc3986).
+モデルコンテキストプロトコル（MCP）は、サーバーがクライアントにリソースを公開するための標準化された方法を提供します。
+リソースにより、サーバーはファイル、データベーススキーマ、アプリケーション固有の情報など、言語モデルのコンテキストを提供するデータを共有できます。
+各リソースは[URI](https://datatracker.ietf.org/doc/html/rfc3986)によって一意に識別されます。
 
-## User Interaction Model
+## ユーザーインタラクションモデル
 
-Resources in MCP are designed to be **application-driven**, with host applications
-determining how to incorporate context based on their needs.
+MCP のリソースは **アプリケーション駆動型** として設計されており、ホストアプリケーションはニーズに基づいてコンテキストをどのように組み込むかを決定します。
 
-For example, applications could:
+例えば、アプリケーションは次のようなことが可能です。
 
-- Expose resources through UI elements for explicit selection, in a tree or list view
-- Allow the user to search through and filter available resources
-- Implement automatic context inclusion, based on heuristics or the AI model's selection
+- ツリービューまたはリストビューで、明示的に選択できるように UI 要素を通じてリソースを公開する
+- ユーザーが利用可能なリソースを検索およびフィルタリングできるようにする
+- ヒューリスティックまたは AI モデルの選択に基づいて、コンテキストを自動的に組み込む機能を実装する
 
 ![Example of resource context picker](/specification/2025-06-18/server/resource-picker.png)
 
-However, implementations are free to expose resources through any interface pattern that
-suits their needs&mdash;the protocol itself does not mandate any specific user
-interaction model.
+ただし、実装では、ニーズに合った任意のインターフェース パターンを通じてリソースを自由に公開できます。プロトコル自体は、特定のユーザー インタラクション モデルを必須としていません。
 
-## Capabilities
+## 機能
 
-Servers that support resources **MUST** declare the `resources` capability:
+リソースをサポートするサーバーは、`resources` 機能を宣言する必要があります。
 
 ```json
 {
@@ -44,15 +39,12 @@ Servers that support resources **MUST** declare the `resources` capability:
 }
 ```
 
-The capability supports two optional features:
+この機能は、以下の2つのオプション機能をサポートしています。
 
-- `subscribe`: whether the client can subscribe to be notified of changes to individual
-  resources.
-- `listChanged`: whether the server will emit notifications when the list of available
-  resources changes.
+- `subscribe`: クライアントが個々のリソースの変更通知を購読できるかどうか。
+- `listChanged`: 利用可能なリソースのリストが変更されたときにサーバーが通知を送信するかどうか。
 
-Both `subscribe` and `listChanged` are optional&mdash;servers can support neither,
-either, or both:
+`subscribe` と `listChanged` はどちらもオプションです。サーバーはどちらもサポートしないか、どちらか一方、または両方をサポートできます。
 
 ```json
 {
@@ -82,14 +74,14 @@ either, or both:
 }
 ```
 
-## Protocol Messages
+## プロトコルメッセージ
 
-### Listing Resources
+### リソースの一覧表示
 
-To discover available resources, clients send a `resources/list` request. This operation
-supports [pagination](/specification/2025-06-18/server/utilities/pagination).
+利用可能なリソースを見つけるために、クライアントは `resources/list` リクエストを送信します。
+この操作は [ページネーション](/specification/2025-06-18/server/utilities/pagination) をサポートしています。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -102,7 +94,7 @@ supports [pagination](/specification/2025-06-18/server/utilities/pagination).
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -123,11 +115,11 @@ supports [pagination](/specification/2025-06-18/server/utilities/pagination).
 }
 ```
 
-### Reading Resources
+### リソースの読み取り
 
-To retrieve resource contents, clients send a `resources/read` request:
+リソースの内容を取得するには、クライアントは `resources/read` リクエストを送信します。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -140,7 +132,7 @@ To retrieve resource contents, clients send a `resources/read` request:
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -160,13 +152,12 @@ To retrieve resource contents, clients send a `resources/read` request:
 }
 ```
 
-### Resource Templates
+### リソーステンプレート
 
-Resource templates allow servers to expose parameterized resources using
-[URI templates](https://datatracker.ietf.org/doc/html/rfc6570). Arguments may be
-auto-completed through [the completion API](/specification/2025-06-18/server/utilities/completion).
+リソーステンプレートを使用すると、サーバーは[URIテンプレート](https://datatracker.ietf.org/doc/html/rfc6570)を使用してパラメータ化されたリソースを公開できます。
+引数は[補完API](/specification/2025-06-18/server/utilities/completion)を通じて自動補完できます。
 
-**Request:**
+**リクエスト:**
 
 ```json
 {
@@ -176,7 +167,7 @@ auto-completed through [the completion API](/specification/2025-06-18/server/uti
 }
 ```
 
-**Response:**
+**レスポンス:**
 
 ```json
 {
@@ -196,10 +187,9 @@ auto-completed through [the completion API](/specification/2025-06-18/server/uti
 }
 ```
 
-### List Changed Notification
+### リスト変更通知
 
-When the list of available resources changes, servers that declared the `listChanged`
-capability **SHOULD** send a notification:
+利用可能なリソースのリストが変更された場合、`listChanged` 機能を宣言したサーバーは**通知を送信すべき**です。
 
 ```json
 {
@@ -208,12 +198,12 @@ capability **SHOULD** send a notification:
 }
 ```
 
-### Subscriptions
+### サブスクリプション
 
-The protocol supports optional subscriptions to resource changes. Clients can subscribe
-to specific resources and receive notifications when they change:
+このプロトコルは、リソースの変更に対するオプションのサブスクリプションをサポートしています。
+クライアントは特定のリソースをサブスクライブし、変更があった際に通知を受け取ることができます。
 
-**Subscribe Request:**
+**サブスクライブリクエスト:**
 
 ```json
 {
@@ -226,7 +216,7 @@ to specific resources and receive notifications when they change:
 }
 ```
 
-**Update Notification:**
+**更新通知:**
 
 ```json
 {
@@ -239,7 +229,7 @@ to specific resources and receive notifications when they change:
 }
 ```
 
-## Message Flow
+## メッセージフロー
 
 ```mermaid
 sequenceDiagram
@@ -264,22 +254,22 @@ sequenceDiagram
     Server-->>Client: Updated contents
 ```
 
-## Data Types
+## データ型
 
-### Resource
+### リソース
 
-A resource definition includes:
+リソース定義には以下が含まれます。
 
-- `uri`: Unique identifier for the resource
-- `name`: The name of the resource.
-- `title`: Optional human-readable name of the resource for display purposes.
-- `description`: Optional description
-- `mimeType`: Optional MIME type
-- `size`: Optional size in bytes
+- `uri`: リソースの一意の識別子
+- `name`: リソース名
+- `title`: 表示用に人間が読めるリソース名（オプション）
+- `description`: 説明（オプション）
+- `mimeType`: MIMEタイプ（オプション）
+- `size`: サイズ（バイト単位）（オプション）
 
-### Resource Contents
+### リソースの内容
 
-Resources can contain either text or binary data:
+リソースには、テキストデータまたはバイナリデータが含まれます。
 
 #### Text Content
 
@@ -305,15 +295,15 @@ Resources can contain either text or binary data:
 }
 ```
 
-### Annotations
+### アノテーション
 
-Resources, resource templates and content blocks support optional annotations that provide hints to clients about how to use or display the resource:
+リソース、リソーステンプレート、コンテンツブロックは、クライアントにリソースの使用方法や表示方法に関するヒントを提供するオプションのアノテーションをサポートしています。
 
-- **`audience`**: An array indicating the intended audience(s) for this resource. Valid values are `"user"` and `"assistant"`. For example, `["user", "assistant"]` indicates content useful for both.
-- **`priority`**: A number from 0.0 to 1.0 indicating the importance of this resource. A value of 1 means "most important" (effectively required), while 0 means "least important" (entirely optional).
-- **`lastModified`**: An ISO 8601 formatted timestamp indicating when the resource was last modified (e.g., `"2025-01-12T15:00:58Z"`).
+- **`audience`**: このリソースの対象ユーザーを示す配列。有効な値は `"user"` と `"assistant"` です。例えば、`["user", "assistant"]` は、両方のユーザーに役立つコンテンツであることを示します。
+- **`priority`**: このリソースの重要度を示す 0.0 から 1.0 までの数値。値 1 は「最も重要」（実質的に必須）を意味し、0 は「最も重要でない」（完全に任意）を意味します。
+- **`lastModified`**: リソースの最終更新日時を示す ISO 8601 形式のタイムスタンプ（例: `"2025-01-12T15:00:58Z"`）。
 
-Example resource with annotations:
+アノテーション付きリソースの例:
 
 ```json
 {
@@ -329,56 +319,48 @@ Example resource with annotations:
 }
 ```
 
-Clients can use these annotations to:
+クライアントはこれらのアノテーションを使用して、次のことを行うことができます。
 
-- Filter resources based on their intended audience
-- Prioritize which resources to include in context
-- Display modification times or sort by recency
+- 対象ユーザーに基づいてリソースをフィルタリングする
+- コンテキストに含めるリソースを優先順位付けする
+- 変更日時を表示するか、新しい順に並べ替える
 
-## Common URI Schemes
+## 一般的なURIスキーム
 
-The protocol defines several standard URI schemes. This list not
-exhaustive&mdash;implementations are always free to use additional, custom URI schemes.
+このプロトコルでは、いくつかの標準URIスキームが定義されています。
+このリストは網羅的なものではなく、実装によっては追加のカスタムURIスキームを自由に使用できます。
 
 ### https://
 
-Used to represent a resource available on the web.
+ウェブ上で利用可能なリソースを表すために使用されます。
 
-Servers **SHOULD** use this scheme only when the client is able to fetch and load the
-resource directly from the web on its own—that is, it doesn’t need to read the resource
-via the MCP server.
+サーバーは、クライアントが自力でウェブから直接リソースを取得して読み込むことができる場合、つまりMCPサーバー経由でリソースを読み込む必要がない場合にのみ、このスキームを使用するべきです（SHOULD）
 
-For other use cases, servers **SHOULD** prefer to use another URI scheme, or define a
-custom one, even if the server will itself be downloading resource contents over the
-internet.
+その他のユースケースでは、サーバー自身がインターネット経由でリソースコンテンツをダウンロードする場合でも、サーバーは別のURIスキームを使用するか、カスタムスキームを定義するべきです（SHOULD）
+
 
 ### file://
 
-Used to identify resources that behave like a filesystem. However, the resources do not
-need to map to an actual physical filesystem.
+ファイルシステムのように動作するリソースを識別するために使用されます。ただし、リソースは実際の物理ファイルシステムにマッピングする必要はありません。
 
-MCP servers **MAY** identify file:// resources with an
-[XDG MIME type](https://specifications.freedesktop.org/shared-mime-info-spec/0.14/ar01s02.html#id-1.3.14),
-like `inode/directory`, to represent non-regular files (such as directories) that don’t
-otherwise have a standard MIME type.
+MCPサーバーは、標準のMIMEタイプを持たない非標準ファイル（ディレクトリなど）を表すために、`inode/directory`のような[XDG MIMEタイプ](https://specifications.freedesktop.org/shared-mime-info-spec/0.14/ar01s02.html#id-1.3.14)を使用してfile://リソースを識別する**場合があります**。
 
 ### git://
 
-Git version control integration.
+Git バージョン管理の統合。
 
-### Custom URI Schemes
+### カスタムURIスキーム
 
-Custom URI schemes **MUST** be in accordance with [RFC3986](https://datatracker.ietf.org/doc/html/rfc3986),
-taking the above guidance in to account.
+カスタムURIスキームは、上記のガイダンスを考慮し、[RFC3986](https://datatracker.ietf.org/doc/html/rfc3986) に準拠する必要があります。
 
-## Error Handling
+## エラー処理
 
-Servers **SHOULD** return standard JSON-RPC errors for common failure cases:
+サーバーは、一般的な失敗ケースに対して標準のJSON-RPCエラーを返すべきです（SHOULD）:
 
-- Resource not found: `-32002`
-- Internal errors: `-32603`
+- リソースが見つかりません: `-32002`
+- 内部エラー: `-32603`
 
-Example error:
+エラー例:
 
 ```json
 {
@@ -394,9 +376,9 @@ Example error:
 }
 ```
 
-## Security Considerations
+## セキュリティに関する考慮事項
 
-1. Servers **MUST** validate all resource URIs
-2. Access controls **SHOULD** be implemented for sensitive resources
-3. Binary data **MUST** be properly encoded
-4. Resource permissions **SHOULD** be checked before operations
+1. サーバーはすべてのリソースURIを検証する必要があります。
+2. 機密性の高いリソースにはアクセス制御を実装する必要があります。
+3. バイナリデータは適切にエンコードする必要があります。
+4. 操作前にリソースの権限をチェックする必要があります。

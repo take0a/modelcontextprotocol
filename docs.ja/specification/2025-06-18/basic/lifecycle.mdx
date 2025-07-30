@@ -6,12 +6,11 @@ title: Lifecycle
 
 <Info>**Protocol Revision**: 2025-06-18</Info>
 
-The Model Context Protocol (MCP) defines a rigorous lifecycle for client-server
-connections that ensures proper capability negotiation and state management.
+モデルコンテキストプロトコル (MCP) は、クライアントサーバー接続の厳格なライフサイクルを定義し、適切な機能ネゴシエーションと状態管理を保証します。
 
-1. **Initialization**: Capability negotiation and protocol version agreement
-2. **Operation**: Normal protocol communication
-3. **Shutdown**: Graceful termination of the connection
+1. **初期化**: 機能ネゴシエーションとプロトコルバージョンの合意
+2. **操作**: 通常のプロトコル通信
+3. **シャットダウン**: 接続の正常な終了
 
 ```mermaid
 sequenceDiagram
@@ -35,22 +34,23 @@ sequenceDiagram
     Note over Client,Server: Connection closed
 ```
 
-## Lifecycle Phases
+## ライフサイクルフェーズ
 
-### Initialization
+### 初期化
 
-The initialization phase **MUST** be the first interaction between client and server.
-During this phase, the client and server:
+初期化フェーズは、クライアントとサーバー間の最初のやり取りでなければなりません。
 
-- Establish protocol version compatibility
-- Exchange and negotiate capabilities
-- Share implementation details
+このフェーズでは、クライアントとサーバーは以下の処理を行います。
 
-The client **MUST** initiate this phase by sending an `initialize` request containing:
+- プロトコルバージョンの互換性を確立する
+- 機能の交換とネゴシエーションを行う
+- 実装の詳細を共有する
 
-- Protocol version supported
-- Client capabilities
-- Client implementation information
+クライアントは、以下の情報を含む「initialize」リクエストを送信することにより、このフェーズを開始しなければなりません。
+
+- サポートされているプロトコルバージョン
+- クライアントの機能
+- クライアントの実装情報
 
 ```json
 {
@@ -75,7 +75,7 @@ The client **MUST** initiate this phase by sending an `initialize` request conta
 }
 ```
 
-The server **MUST** respond with its own capabilities and information:
+サーバーは**自身の機能と情報で応答しなければなりません**:
 
 ```json
 {
@@ -106,8 +106,7 @@ The server **MUST** respond with its own capabilities and information:
 }
 ```
 
-After successful initialization, the client **MUST** send an `initialized` notification
-to indicate it is ready to begin normal operations:
+初期化が成功した後、クライアントは通常の操作を開始する準備ができていることを示すために「初期化済み」通知を送信する必要があります。
 
 ```json
 {
@@ -116,119 +115,98 @@ to indicate it is ready to begin normal operations:
 }
 ```
 
-- The client **SHOULD NOT** send requests other than
-  [pings](/specification/2025-06-18/basic/utilities/ping) before the server has responded to the
-  `initialize` request.
-- The server **SHOULD NOT** send requests other than
-  [pings](/specification/2025-06-18/basic/utilities/ping) and
-  [logging](/specification/2025-06-18/server/utilities/logging) before receiving the `initialized`
-  notification.
+- サーバーが `initialize` リクエストに応答する前に、クライアントは [ping](/specification/2025-06-18/basic/utilities/ping) 以外のリクエストを送信すべきではありません。****
+- サーバーは、`initialized` 通知を受信する前に、[ping](/specification/2025-06-18/basic/utilities/ping) と
+[logging](/specification/2025-06-18/server/utilities/logging) 以外のリクエストを送信すべきではありません。**すべきではありません**。
 
-#### Version Negotiation
+#### バージョンネゴシエーション
 
-In the `initialize` request, the client **MUST** send a protocol version it supports.
-This **SHOULD** be the _latest_ version supported by the client.
+`initialize` リクエストにおいて、クライアントはサポートするプロトコルバージョンを送信する必要があります。
 
-If the server supports the requested protocol version, it **MUST** respond with the same
-version. Otherwise, the server **MUST** respond with another protocol version it
-supports. This **SHOULD** be the _latest_ version supported by the server.
+このバージョンは、クライアントがサポートする最新バージョンである必要があります。
 
-If the client does not support the version in the server's response, it **SHOULD**
-disconnect.
+サーバーが要求されたプロトコルバージョンをサポートしている場合、同じバージョンで応答する必要があります。
+そうでない場合、サーバーはサポートする別のプロトコルバージョンで応答する必要があります。
+このバージョンは、サーバーがサポートする最新バージョンである必要があります。
+
+クライアントがサーバーの応答でサポートしていないバージョンをサポートしている場合、接続を切断する必要があります。
 
 <Note>
-If using HTTP, the client **MUST** include the `MCP-Protocol-Version:
-<protocol-version>` HTTP header on all subsequent requests to the MCP
-server.
-For details, see [the Protocol Version Header section in Transports](/specification/2025-06-18/basic/transports#protocol-version-header).
+HTTP を使用する場合、クライアントは MCP サーバーへの後続のすべてのリクエストに `MCP-Protocol-Version: <protocol-version>` HTTP ヘッダーを含める必要があります (**MUST**)。詳細については、[トランスポートのプロトコル バージョン ヘッダー セクション](/specification/2025-06-18/basic/transports#protocol-version-header) を参照してください。
 </Note>
 
-#### Capability Negotiation
+#### 機能ネゴシエーション
 
-Client and server capabilities establish which optional protocol features will be
-available during the session.
+クライアントとサーバーの機能により、セッション中に利用可能なオプションのプロトコル機能が決定されます。
 
-Key capabilities include:
+主な機能は次のとおりです。
 
 | Category | Capability     | Description                                                                               |
 | -------- | -------------- | ----------------------------------------------------------------------------------------- |
-| Client   | `roots`        | Ability to provide filesystem [roots](/specification/2025-06-18/client/roots)             |
-| Client   | `sampling`     | Support for LLM [sampling](/specification/2025-06-18/client/sampling) requests            |
-| Client   | `elicitation`  | Support for server [elicitation](/specification/2025-06-18/client/elicitation) requests   |
-| Client   | `experimental` | Describes support for non-standard experimental features                                  |
-| Server   | `prompts`      | Offers [prompt templates](/specification/2025-06-18/server/prompts)                       |
-| Server   | `resources`    | Provides readable [resources](/specification/2025-06-18/server/resources)                 |
-| Server   | `tools`        | Exposes callable [tools](/specification/2025-06-18/server/tools)                          |
-| Server   | `logging`      | Emits structured [log messages](/specification/2025-06-18/server/utilities/logging)       |
-| Server   | `completions`  | Supports argument [autocompletion](/specification/2025-06-18/server/utilities/completion) |
-| Server   | `experimental` | Describes support for non-standard experimental features                                  |
+| Client   | `roots`        | ファイルシステム[roots](/specification/2025-06-18/client/roots)を提供する機能|
+| Client   | `sampling`     | LLM [サンプリング](/specification/2025-06-18/client/sampling)リクエストのサポート|
+| Client   | `elicitation`  | サーバーの[elicitation](/specification/2025-06-18/client/elicitation)リクエストのサポート|
+| Client   | `experimental` | 非標準の実験的機能のサポートについて説明します|
+| Server   | `prompts`      | [プロンプトテンプレート](/specification/2025-06-18/server/prompts)を提供します|
+| Server   | `resources`    | 読み取り可能な[リソース](/specification/2025-06-18/server/resources)を提供します|
+| Server   | `tools`        | 呼び出し可能な[ツール](/specification/2025-06-18/server/tools)を公開します|
+| Server   | `logging`      | 構造化された[ログメッセージ](/specification/2025-06-18/server/utilities/logging)を出力します。|
+| Server   | `completions`  | 引数の[自動補完](/specification/2025-06-18/server/utilities/completion)をサポートします|
+| Server   | `experimental` | 非標準の実験的機能のサポートについて説明します|
 
-Capability objects can describe sub-capabilities like:
+機能オブジェクトは、次のようなサブ機能を記述できます。
 
-- `listChanged`: Support for list change notifications (for prompts, resources, and
-  tools)
-- `subscribe`: Support for subscribing to individual items' changes (resources only)
+- `listChanged`: リストの変更通知のサポート（プロンプト、リソース、ツール用）
+- `subscribe`: 個々のアイテムの変更を購読するサポート（リソースのみ）
 
-### Operation
+### オペレーション
 
-During the operation phase, the client and server exchange messages according to the
-negotiated capabilities.
+オペレーションフェーズでは、クライアントとサーバーはネゴシエートされた機能に基づいてメッセージを交換します。
 
-Both parties **MUST**:
+双方は**必須**です。
 
-- Respect the negotiated protocol version
-- Only use capabilities that were successfully negotiated
+- ネゴシエートされたプロトコルバージョンを尊重する
+- ネゴシエートに成功した機能のみを使用する
 
-### Shutdown
+### シャットダウン
 
-During the shutdown phase, one side (usually the client) cleanly terminates the protocol
-connection. No specific shutdown messages are defined—instead, the underlying transport
-mechanism should be used to signal connection termination:
+シャットダウンフェーズでは、一方（通常はクライアント）がプロトコル接続を正常に終了します。
+特定のシャットダウンメッセージは定義されていません。代わりに、基盤となるトランスポートメカニズムを使用して接続終了を通知する必要があります。
 
 #### stdio
 
-For the stdio [transport](/specification/2025-06-18/basic/transports), the client **SHOULD** initiate
-shutdown by:
+stdio [トランスポート](/specification/2025-06-18/basic/transports)の場合、クライアントは以下の方法でシャットダウンを開始すべきです。
 
-1. First, closing the input stream to the child process (the server)
-2. Waiting for the server to exit, or sending `SIGTERM` if the server does not exit
-   within a reasonable time
-3. Sending `SIGKILL` if the server does not exit within a reasonable time after `SIGTERM`
+1. まず、子プロセス（サーバー）への入力ストリームを閉じる。
+2. サーバーが終了するのを待つ。サーバーが適切な時間内に終了しない場合は、`SIGTERM` を送信する。
+3. `SIGTERM` 送信後、適切な時間内にサーバーが終了しない場合は、`SIGKILL` を送信する。
 
-The server **MAY** initiate shutdown by closing its output stream to the client and
-exiting.
+サーバーは、クライアントへの出力ストリームを閉じて終了することでシャットダウンを開始してもよい（MAY）*。
 
 #### HTTP
 
-For HTTP [transports](/specification/2025-06-18/basic/transports), shutdown is indicated by closing the
-associated HTTP connection(s).
+HTTP [トランスポート](/specification/2025-06-18/basic/transports) の場合、シャットダウンは関連する HTTP 接続を閉じることによって示されます。
 
-## Timeouts
+## タイムアウト
 
-Implementations **SHOULD** establish timeouts for all sent requests, to prevent hung
-connections and resource exhaustion. When the request has not received a success or error
-response within the timeout period, the sender **SHOULD** issue a [cancellation
-notification](/specification/2025-06-18/basic/utilities/cancellation) for that request and stop waiting for
-a response.
+実装は、接続のハングやリソース枯渇を防ぐため、送信されたすべてのリクエストにタイムアウトを設定する必要があります（SHOULD）**。
 
-SDKs and other middleware **SHOULD** allow these timeouts to be configured on a
-per-request basis.
+リクエストがタイムアウト期間内に成功またはエラーのレスポンスを受信しなかった場合、送信者はそのリクエストに対して[キャンセル通知](/specification/2025-06-18/basic/utilities/cancellation)を発行し、レスポンスの待機を停止する必要があります（SHOULD）**。
 
-Implementations **MAY** choose to reset the timeout clock when receiving a [progress
-notification](/specification/2025-06-18/basic/utilities/progress) corresponding to the request, as this
-implies that work is actually happening. However, implementations **SHOULD** always
-enforce a maximum timeout, regardless of progress notifications, to limit the impact of a
-misbehaving client or server.
+SDKやその他のミドルウェアは、これらのタイムアウトをリクエストごとに設定できるようにする必要があります（SHOULD）**。
 
-## Error Handling
+実装は、リクエストに対応する[進行状況通知](/specification/2025-06-18/basic/utilities/progress)を受信した場合、実際に作業が行われていることを示すため、タイムアウトクロックをリセットすることを選択できます（MAY）**。
+ただし、クライアントまたはサーバーの不正な動作による影響を制限するため、実装は進行状況通知の有無にかかわらず、常に最大タイムアウトを強制する必要があります（SHOULD）**。
 
-Implementations **SHOULD** be prepared to handle these error cases:
+## エラー処理
 
-- Protocol version mismatch
-- Failure to negotiate required capabilities
-- Request [timeouts](#timeouts)
+実装は、以下のエラーケースを処理できるように準備しておく必要があります（**SHOULD**）。
 
-Example initialization error:
+- プロトコルバージョンの不一致
+- 必要な機能のネゴシエーション失敗
+- リクエストの[タイムアウト](#timeouts)
+
+初期化エラーの例：
 
 ```json
 {

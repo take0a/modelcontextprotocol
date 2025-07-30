@@ -4,43 +4,42 @@ title: Security Best Practices
 
 <div id="enable-section-numbers" />
 
-## Introduction
+## はじめに
 
-### Purpose and Scope
+### 目的と適用範囲
 
-This document provides security considerations for the Model Context Protocol (MCP), complementing the MCP Authorization specification. This document identifies security risks, attack vectors, and best practices specific to MCP implementations.
+本文書は、MCP認可仕様を補完するモデルコンテキストプロトコル（MCP）のセキュリティに関する考慮事項を示します。本文書では、MCP実装に特有のセキュリティリスク、攻撃ベクトル、およびベストプラクティスを特定します。
 
-The primary audience for this document includes developers implementing MCP authorization flows, MCP server operators, and security professionals evaluating MCP-based systems. This document should be read alongside the MCP Authorization specification and [OAuth 2.0 security best practices](https://datatracker.ietf.org/doc/html/rfc9700).
+本文書の主な対象読者は、MCP認可フローを実装する開発者、MCPサーバー運用者、およびMCPベースのシステムを評価するセキュリティ専門家です。本文書は、MCP認可仕様および[OAuth 2.0セキュリティのベストプラクティス](https://datatracker.ietf.org/doc/html/rfc9700)と併せてお読みください。
 
-## Attacks and Mitigations
+## 攻撃と緩和策
 
-This section gives a detailed description of attacks on MCP implementations, along with potential countermeasures.
+このセクションでは、MCP実装に対する攻撃と、潜在的な対策について詳しく説明します。
 
-### Confused Deputy Problem
+### Confused Deputy問題
 
-Attackers can exploit MCP servers proxying other resource servers, creating "[confused deputy](https://en.wikipedia.org/wiki/Confused_deputy_problem)" vulnerabilities.
+攻撃者は、他のリソースサーバーをプロキシするMCPサーバーを悪用し、「[Confused Deputy](https://en.wikipedia.org/wiki/Confused_deputy_problem)」脆弱性を作り出す可能性があります。
 
-#### Terminology
+#### 用語
 
-**MCP Proxy Server**
-: An MCP server that connects MCP clients to third-party APIs, offering MCP features while delegating operations and acting as a single OAuth client to the third-party API server.
+**MCP プロキシサーバー**
+: MCP クライアントをサードパーティ API に接続し、MCP 機能を提供しながら操作を委任し、サードパーティ API サーバーに対して単一の OAuth クライアントとして機能する MCP サーバー。
 
-**Third-Party Authorization Server**
-: Authorization server that protects the third-party API. It may lack dynamic client registration support, requiring MCP proxy to use a static client ID for all requests.
+**サードパーティ認可サーバー**
+: サードパーティ API を保護する認可サーバー。動的なクライアント登録をサポートしていない場合があり、その場合は MCP プロキシはすべてのリクエストに対して静的クライアント ID を使用する必要があります。
 
-**Third-Party API**
-: The protected resource server that provides the actual API functionality. Access to this
-API requires tokens issued by the third-party authorization server.
+**サードパーティ API**
+: 実際の API 機能を提供する保護されたリソースサーバー。
+この API にアクセスするには、サードパーティ認可サーバーが発行したトークンが必要です。
 
-**Static Client ID**
-: A fixed OAuth 2.0 client identifier used by the MCP proxy server when communicating with
-the third-party authorization server. This Client ID refers to the MCP server acting as a client
-to the Third-Party API. It is the same value for all MCP server to Third-Party API interactions regardless of
-which MCP client initiated the request.
+**静的クライアント ID**
+: MCP プロキシサーバーがサードパーティ認可サーバーと通信する際に使用する固定の OAuth 2.0 クライアント ID。
+このクライアント ID は、サードパーティ API のクライアントとして機能する MCP サーバーを指します。
+どの MCP クライアントがリクエストを開始したかに関係なく、MCP サーバーとサードパーティ API のすべてのやり取りで同じ値になります。
 
-#### Architecture and Attack Flows
+#### アーキテクチャと攻撃フロー
 
-##### Normal OAuth proxy usage (preserves user consent)
+##### 通常のOAuthプロキシの使用（ユーザーの同意を維持）
 
 ```mermaid
 sequenceDiagram
@@ -68,7 +67,7 @@ sequenceDiagram
     Note over M,UA: Exchange code for token, etc.
 ```
 
-##### Malicious OAuth proxy usage (skips user consent)
+##### 悪意のある OAuth プロキシの使用 (ユーザーの同意をスキップ)
 
 ```mermaid
 sequenceDiagram
@@ -96,57 +95,53 @@ sequenceDiagram
    A->>M: Attacker impersonates user to MCP server
 ```
 
-#### Attack Description
+#### 攻撃の説明
 
-When an MCP proxy server uses a static client ID to authenticate with a third-party
-authorization server that does not support dynamic client registration, the following
-attack becomes possible:
+MCPプロキシサーバーが、動的クライアント登録をサポートしていないサードパーティ認可サーバーで静的クライアントIDを使用して認証を行う場合、以下の攻撃が可能になります。
 
-1. A user authenticates normally through the MCP proxy server to access the third-party API
-2. During this flow, the third-party authorization server sets a cookie on the user agent
-   indicating consent for the static client ID
-3. An attacker later sends the user a malicious link containing a crafted authorization request which contains a malicious redirect URI along with a new dynamically registered client ID
-4. When the user clicks the link, their browser still has the consent cookie from the previous legitimate request
-5. The third-party authorization server detects the cookie and skips the consent screen
-6. The MCP authorization code is redirected to the attacker's server (specified in the crafted redirect_uri during dynamic client registration)
-7. The attacker exchanges the stolen authorization code for access tokens for the MCP server without the user's explicit approval
-8. Attacker now has access to the third-party API as the compromised user
+1. ユーザーがMCPプロキシサーバーを介して通常通り認証を行い、サードパーティAPIにアクセスします。
+2. このフローにおいて、サードパーティ認可サーバーは、静的クライアントIDへの同意を示すCookieをユーザーエージェントに設定します。
+3. 攻撃者はその後、細工された認可リクエストを含む悪意のあるリンクをユーザーに送信します。このリクエストには、悪意のあるリダイレクトURIと、新たに動的に登録されたクライアントIDが含まれています。
+4. ユーザーがリンクをクリックしても、ブラウザには以前の正当なリクエストの同意Cookieが残っています。
+5. サードパーティ認可サーバーはCookieを検出し、同意画面をスキップします。
+6. MCP認可コードは、攻撃者のサーバー（動的クライアント登録時に細工されたredirect_uriで指定）にリダイレクトされます。
+7. 攻撃者は、ユーザーの明示的な承認なしに、盗んだ認可コードをMCPサーバーのアクセストークンと交換します。
+8. これで、攻撃者はサードパーティAPIに侵害されたユーザーとしてアクセスできるようになります。
 
-#### Mitigation
+#### 緩和策
 
-MCP proxy servers using static client IDs **MUST** obtain user consent for each dynamically
-registered client before forwarding to third-party authorization servers (which may require additional consent).
+静的クライアントIDを使用するMCPプロキシサーバーは、動的に登録されたクライアントごとに、サードパーティの認可サーバー（追加の同意が必要となる場合があります）に転送する前に、ユーザーの同意を**取得する必要があります**。
 
-### Token Passthrough
+### トークンパススルー
 
-"Token passthrough" is an anti-pattern where an MCP server accepts tokens from an MCP client without validating that the tokens were properly issued _to the MCP server_ and "passing them through" to the downstream API.
+「トークンパススルー」とは、MCPサーバーがMCPクライアントからトークンを受け取り、そのトークンがMCPサーバーに正しく発行されたことを検証せずに、下流のAPIに「パススルー」してしまうアンチパターンです。
 
-#### Risks
+#### リスク
 
-Token passthrough is explicitly forbidden in the [authorization specification](/specification/2025-06-18/basic/authorization) as it introduces a number of security risks, that include:
+トークンパススルーは、[認可仕様](/specification/2025-06-18/basic/authorization)において明示的に禁止されています。これは、次のような多くのセキュリティリスクをもたらすためです。
 
-- **Security Control Circumvention**
-  - The MCP Server or downstream APIs might implement important security controls like rate limiting, request validation, or traffic monitoring, that depend on the token audience or other credential constraints. If clients can obtain and use tokens directly with the downstream APIs without the MCP server validating them properly or ensuring that the tokens are issued for the right service, they bypass these controls.
-- **Accountability and Audit Trail Issues**
-  - The MCP Server will be unable to identify or distinguish between MCP Clients when clients are calling with an upstream-issued access token which may be opaque to the MCP Server.
-  - The downstream Resource Server’s logs may show requests that appear to come from a different source with a different identity, rather than the MCP server that is actually forwarding the tokens.
-  - Both factors make incident investigation, controls, and auditing more difficult.
-  - If the MCP Server passes tokens without validating their claims (e.g., roles, privileges, or audience) or other metadata, a malicious actor in possession of a stolen token can use the server as a proxy for data exfiltration.
-- **Trust Boundary Issues**
-  - The downstream Resource Server grants trust to specific entities. This trust might include assumptions about origin or client behavior patterns. Breaking this trust boundary could lead to unexpected issues.
-  - If the token is accepted by multiple services without proper validation, an attacker compromising one service can use the token to access other connected services.
-- **Future Compatibility Risk**
-  - Even if an MCP Server starts as a "pure proxy" today, it might need to add security controls later. Starting with proper token audience separation makes it easier to evolve the security model.
+- **セキュリティ制御の回避**
+  - MCPサーバーまたは下流APIは、トークンの対象ユーザーやその他の認証情報制約に依存する、レート制限、リクエスト検証、トラフィック監視などの重要なセキュリティ制御を実装している場合があります。クライアントが、MCPサーバーによる適切な検証や、トークンが適切なサービスに対して発行されたことの確認を行わずに、下流APIを使用してトークンを直接取得・使用できる場合、これらの制御を回避してしまいます。
+- **アカウンタビリティと監査証跡の問題**
+  - クライアントが上流で発行されたアクセストークンを使用して呼び出しを行う場合、MCPサーバーはMCPクライアントを識別または区別することができません。このアクセストークンはMCPサーバーにとって不透明である可能性があります。
+  - 下流リソースサーバーのログには、実際にトークンを転送しているMCPサーバーではなく、異なるIDを持つ別のソースから送信されたように見えるリクエストが記録される場合があります。
+  - どちらの要因も、インシデント調査、制御、監査を困難にします。
+  - MCPサーバーがトークンのクレーム（ロール、権限、オーディエンスなど）やその他のメタデータを検証せずにトークンを渡すと、盗まれたトークンを所持する悪意のある攻撃者が、そのサーバーをデータ窃取のプロキシとして利用する可能性があります。
+- **信頼境界の問題**
+  - 下流リソースサーバーは特定のエンティティに信頼を付与します。この信頼には、オリジンやクライアントの行動パターンに関する想定が含まれる場合があります。この信頼境界を破ると、予期しない問題が発生する可能性があります。
+  - トークンが適切な検証なしに複数のサービスに受け入れられた場合、あるサービスを侵害した攻撃者が、そのトークンを使用して他の接続されたサービスにアクセスできるようになります。
+- **将来の互換性リスク**
+  - MCPサーバーが現在「純粋なプロキシ」として開始されたとしても、後からセキュリティ制御の追加が必要になる可能性があります。適切なトークンオーディエンスの分離から始めると、セキュリティモデルの進化が容易になります。
 
-#### Mitigation
+#### 緩和策
 
-MCP servers **MUST NOT** accept any tokens that were not explicitly issued for the MCP server.
+MCP サーバーは、MCP サーバーに対して明示的に発行されていないトークンを受け入れてはなりません（**MUST NOT**）。
 
-### Session Hijacking
+### セッションハイジャック
 
-Session hijacking is an attack vector where a client is provided a session ID by the server, and an unauthorized party is able to obtain and use that same session ID to impersonate the original client and perform unauthorized actions on their behalf.
+セッションハイジャックとは、サーバーからクライアントにセッションIDが提供され、権限のない第三者がそのセッションIDを取得・使用して元のクライアントになりすまし、不正な操作を実行する攻撃手法です。
 
-#### Session Hijack Prompt Injection
+#### セッションハイジャックプロンプトインジェクション
 
 ```mermaid
 sequenceDiagram
@@ -172,7 +167,7 @@ sequenceDiagram
     Client->>Client: Acts based on malicious payload
 ```
 
-#### Session Hijack Impersonation
+#### セッションハイジャックのなりすまし
 
 ```mermaid
 sequenceDiagram
@@ -190,41 +185,44 @@ sequenceDiagram
     Server-->>Attacker: Respond as if Attacker is Client (session hijack)
 ```
 
-#### Attack Description
+#### 攻撃の説明
 
-When you have multiple stateful HTTP servers that handle MCP requests, the following attack vectors are possible:
+MCPリクエストを処理するステートフルHTTPサーバーが複数存在する場合、以下の攻撃ベクトルが考えられます。
 
-**Session Hijack Prompt Injection**
+**セッションハイジャック・プロンプトインジェクション**
 
-1. The client connects to **Server A** and receives a session ID.
-1. The attacker obtains an existing session ID and sends a malicious event to **Server B** with said session ID.
+1. クライアントが**サーバーA**に接続し、セッションIDを取得します。
+1. 攻撃者は既存のセッションIDを取得し、そのセッションIDを使用して**サーバーB**に悪意のあるイベントを送信します。
 
-   - When a server supports [redelivery/resumable streams](/specification/2025-06-18/basic/transports#resumability-and-redelivery), deliberately terminating the request before receiving the response could lead to it being resumed by the original client via the GET request for server sent events.
-   - If a particular server initiates server sent events as a consequence of a tool call such as a `notifications/tools/list_changed`, where it is possible to affect the tools that are offered by the server, a client could end up with tools that they were not aware were enabled.
+  - サーバーが[再配信/再開可能なストリーム](/specification/2025-06-18/basic/transports#resumability-and-redelivery)をサポートしている場合、レスポンスを受信する前にリクエストを意図的に終了させると、元のクライアントがサーバー送信イベントのGETリクエストを介してリクエストを再開できる可能性があります。
+  - 特定のサーバーが、`notifications/tools/list_changed`などのツール呼び出しの結果としてサーバー送信イベントを開始した場合、サーバーが提供するツールに影響を与える可能性があります。クライアントは、有効化されていることに気付いていないツールを使用せざるを得なくなる可能性があります。
 
-1. **Server B** enqueues the event (associated with session ID) into a shared queue.
-1. **Server A** polls the queue for events using the session ID and retrieves the malicious payload.
-1. **Server A** sends the malicious payload to the client as an asynchronous or resumed response.
-1. The client receives and acts on the malicious payload, leading to potential compromise.
+1. **サーバーB** は、セッションIDに関連付けられたイベントを共有キューに追加します。
+1. **サーバーA** は、セッションIDを使用してキュー内のイベントをポーリングし、悪意のあるペイロードを取得します。
+1. **サーバーA** は、悪意のあるペイロードを非同期レスポンスまたは再開レスポンスとしてクライアントに送信します。
+1. クライアントは悪意のあるペイロードを受信し、それに基づいて操作を行い、潜在的な侵害を引き起こします。
 
-**Session Hijack Impersonation**
+**セッションハイジャック（なりすまし）**
 
-1. The MCP client authenticates with the MCP server, creating a persistent session ID.
-2. The attacker obtains the session ID.
-3. The attacker makes calls to the MCP server using the session ID.
-4. MCP server does not check for additional authorization and treats the attacker as a legitimate user, allowing unauthorized access or actions.
+1. MCPクライアントはMCPサーバーで認証を行い、永続的なセッションIDを作成します。
+2. 攻撃者はセッションIDを取得します。
+3. 攻撃者はセッションIDを使用してMCPサーバーを呼び出します。
+4. MCPサーバーは追加の認証を確認せず、攻撃者を正当なユーザーとして扱い、不正なアクセスや操作を許可します。
 
-#### Mitigation
+#### 緩和策
 
-To prevent session hijacking and event injection attacks, the following mitigations should be implemented:
+セッションハイジャック攻撃とイベントインジェクション攻撃を防ぐには、以下の緩和策を実装する必要があります。
 
-MCP servers that implement authorization **MUST** verify all inbound requests.
-MCP Servers **MUST NOT** use sessions for authentication.
+認可を実装するMCPサーバーは、すべての受信リクエストを検証する必要があります。
 
-MCP servers **MUST** use secure, non-deterministic session IDs.
-Generated session IDs (e.g., UUIDs) **SHOULD** use secure random number generators. Avoid predictable or sequential session identifiers that could be guessed by an attacker. Rotating or expiring session IDs can also reduce the risk.
+MCPサーバーは、認証にセッションを使用してはなりません。
 
-MCP servers **SHOULD** bind session IDs to user-specific information.
-When storing or transmitting session-related data (e.g., in a queue), combine the session ID with information unique to the authorized user, such as their internal user ID. Use a key format like `<user_id>:<session_id>`. This ensures that even if an attacker guesses a session ID, they cannot impersonate another user as the user ID is derived from the user token and not provided by the client.
+MCPサーバーは、安全で非決定論的なセッションIDを使用する必要があります。
 
-MCP servers can optionally leverage additional unique identifiers.
+生成されるセッションID（UUIDなど）には、安全な乱数ジェネレータを使用するべきです。攻撃者に推測される可能性のある、予測可能または連続したセッションIDは避けてください。セッションIDをローテーションまたは有効期限切れにすることでも、リスクを軽減できます。
+
+MCPサーバーは、セッションIDをユーザー固有の情報にバインドする必要があります。
+
+セッション関連データを保存または送信する場合（例：キュー内）、セッションIDを、承認されたユーザー固有の情報（内部ユーザーIDなど）と組み合わせます。`<user_id>:<session_id>`のようなキー形式を使用します。これにより、たとえ攻撃者がセッションIDを推測できたとしても、ユーザーIDはユーザートークンから取得され、クライアントから提供されるものではないため、他のユーザーになりすますことはできません。
+
+MCPサーバーは、オプションで追加の固有識別子を利用できます。
